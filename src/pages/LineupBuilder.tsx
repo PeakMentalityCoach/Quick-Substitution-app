@@ -48,22 +48,23 @@ export default function LineupBuilder() {
     if (selectedPlayers.includes(playerId)) {
       setSelectedPlayers(selectedPlayers.filter((id) => id !== playerId));
     } else {
-      if (selectedPlayers.length < 11) {
+      if (selectedPlayers.length < 12) {
         setSelectedPlayers([...selectedPlayers, playerId]);
       } else {
-        alert('You can only select 11 players for the lineup');
+        alert('You can only select up to 12 players for the lineup');
       }
     }
   };
 
   const handleOptimize = async () => {
-    if (selectedPlayers.length !== 11) {
-      alert('Please select exactly 11 players');
+    if (selectedPlayers.length < 11 || selectedPlayers.length > 12) {
+      alert('Please select 11 or 12 players');
       return;
     }
 
     try {
-      const positions = STANDARD_POSITIONS.slice(0, 11); // Use first 11 standard positions
+      // Use exactly as many positions as players selected
+      const positions = STANDARD_POSITIONS.slice(0, selectedPlayers.length);
 
       const result = await api.optimizeLineup(selectedPlayers, positions);
       setLineup(result.lineup);
@@ -77,8 +78,8 @@ export default function LineupBuilder() {
   };
 
   const handleStartGame = async () => {
-    if (lineup.length !== 11) {
-      alert('Please optimize the lineup first');
+    if (lineup.length < 11 || lineup.length > 12) {
+      alert('Please optimize the lineup first (11 or 12 players)');
       return;
     }
 
@@ -142,7 +143,7 @@ export default function LineupBuilder() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-3xl font-bold text-gray-800">Build Lineup</h2>
-          <p className="text-gray-600 mt-1">Select 11 players and optimize their positions</p>
+          <p className="text-gray-600 mt-1">Select 11-12 players and optimize their positions</p>
         </div>
 
         <div className="flex gap-2">
@@ -156,7 +157,7 @@ export default function LineupBuilder() {
 
           <button
             onClick={handleOptimize}
-            disabled={selectedPlayers.length !== 11}
+            disabled={selectedPlayers.length < 11 || selectedPlayers.length > 12}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             <Sparkles size={18} />
@@ -165,7 +166,7 @@ export default function LineupBuilder() {
 
           <button
             onClick={handleStartGame}
-            disabled={lineup.length !== 11}
+            disabled={lineup.length < 11 || lineup.length > 12}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             <Play size={18} />
@@ -179,7 +180,7 @@ export default function LineupBuilder() {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-md p-4">
             <h3 className="font-bold text-lg mb-3 text-gray-800">
-              Selected Players ({selectedPlayers.length}/11)
+              Selected Players ({selectedPlayers.length}/11-12)
             </h3>
 
             {selectedPlayers.length === 0 ? (
@@ -222,7 +223,7 @@ export default function LineupBuilder() {
               </div>
             )}
 
-            {selectedPlayers.length < 11 && (
+            {selectedPlayers.length < 12 && (
               <>
                 <h3 className="font-bold text-lg mb-3 text-gray-800 mt-6">
                   Available Players
@@ -268,7 +269,7 @@ export default function LineupBuilder() {
 
             {lineup.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                <p className="mb-2">Select 11 players and click Auto-Optimize</p>
+                <p className="mb-2">Select 11-12 players and click Auto-Optimize</p>
                 <p className="text-sm">The system will assign optimal positions</p>
               </div>
             ) : (

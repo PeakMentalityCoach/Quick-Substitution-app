@@ -71,22 +71,18 @@ export interface Note {
   updatedAt: number;
 }
 
-// Standard positions used across the app
+// Standard positions used across the app (12 official roles)
 export const STANDARD_POSITIONS = [
   'GK',   // Goalkeeper
+  'LB',   // Left Back
   'CB1',  // Center Back 1
   'CB2',  // Center Back 2
-  'LB',   // Left Back
   'RB',   // Right Back
-  'CDM',  // Defensive Midfielder
-  'CM',   // Central Midfielder
   'LM',   // Left Midfielder
+  'CM1',  // Central Midfielder 1
+  'CM2',  // Central Midfielder 2
   'RM',   // Right Midfielder
-  'CAM',  // Attacking Midfielder
   'LW',   // Left Winger
-  'RW',   // Right Winger
   'ST',   // Striker
-  'CF',   // Center Forward
-  'KA',   // Custom position (from coach's diagram)
-  'PC',   // Custom position (from coach's diagram)
+  'RW',   // Right Winger
 ];

@@ -1,0 +1,268 @@
+// Prisma schema for Substitution Optimizer
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Club/Team User
+model ClubUser {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String?
+  role          String   @default("coach") // coach, admin, assistant
+  clubName      String?
+  adminCode     String?  // Optional admin code for login
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  matches       Match[]
+  players       Player[]
+  eventLogs     EventLog[]
+}
+
+// Player model
+model Player {
+  id              String   @id @default(uuid())
+  userId          String
+  user            ClubUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name            String
+  number          Int
+  position        String   // GK, DEF, MID, FWD
+  preferredFoot   String?  // left, right, both
+  skillLevel      Int      @default(3) // 1-5 rating
+  stamina         Int      @default(3) // 1-5 rating
+  isActive        Boolean  @default(true)
+
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastSyncedAt    DateTime @default(now())
+
+  lineupPlayers   LineupPlayer[]
+  benchPlayers    BenchPlayer[]
+  substitutions   Substitution[]
+  setPieceRoles   SetPieceRole[]
+
+  @@index([userId])
+  @@index([number])
+}
+
+// Match model
+model Match {
+  id              String   @id @default(uuid())
+  userId          String
+  user            ClubUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  opponent        String
+  date            DateTime
+  location        String?
+  competition     String?  // league, cup, friendly
+  status          String   @default("upcoming") // upcoming, inProgress, completed
+
+  score           String?  // e.g., "2-1"
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastSyncedAt    DateTime @default(now())
+
+  lineups         Lineup[]
+  substitutions   Substitution[]
+  matchNotes      MatchNote[]
+  setPieces       SetPiece[]
+  eventLogs       EventLog[]
+
+  @@index([userId])
+  @@index([date])
+  @@index([status])
+}
+
+// Lineup (Starting 11)
+model Lineup {
+  id              String   @id @default(uuid())
+  matchId         String
+  match           Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  formation       String   // e.g., "4-3-3", "4-4-2"
+  isActive        Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastSyncedAt    DateTime @default(now())
+
+  players         LineupPlayer[]
+  bench           Bench[]
+
+  @@index([matchId])
+}
+
+// Junction table for Lineup and Player
+model LineupPlayer {
+  id              String   @id @default(uuid())
+  lineupId        String
+  lineup          Lineup   @relation(fields: [lineupId], references: [id], onDelete: Cascade)
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  position        String   // Position on field
+  positionX       Float?   // X coordinate (0-100)
+  positionY       Float?   // Y coordinate (0-100)
+  order           Int      // Order in lineup (1-11)
+
+  createdAt       DateTime @default(now())
+
+  @@unique([lineupId, playerId])
+  @@index([lineupId])
+  @@index([playerId])
+}
+
+// Bench
+model Bench {
+  id              String   @id @default(uuid())
+  lineupId        String
+  lineup          Lineup   @relation(fields: [lineupId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  players         BenchPlayer[]
+
+  @@index([lineupId])
+}
+
+// Junction table for Bench and Player
+model BenchPlayer {
+  id              String   @id @default(uuid())
+  benchId         String
+  bench           Bench    @relation(fields: [benchId], references: [id], onDelete: Cascade)
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  order           Int      // Order on bench
+
+  createdAt       DateTime @default(now())
+
+  @@unique([benchId, playerId])
+  @@index([benchId])
+  @@index([playerId])
+}
+
+// Substitution
+model Substitution {
+  id              String   @id @default(uuid())
+  matchId         String
+  match           Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  playerInId      String
+  playerIn        Player   @relation(fields: [playerInId], references: [id], name: "playerIn")
+  playerOutId     String?  // Optional for tactical changes
+
+  minute          Int
+  reason          String?  // injury, tactical, performance, rest
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastSyncedAt    DateTime @default(now())
+
+  @@index([matchId])
+  @@index([playerInId])
+}
+
+// Match Notes
+model MatchNote {
+  id              String   @id @default(uuid())
+  matchId         String
+  match           Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  content         String
+  type            String   @default("general") // general, tactical, player, opponent
+  timestamp       DateTime @default(now())
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastSyncedAt    DateTime @default(now())
+
+  @@index([matchId])
+  @@index([type])
+}
+
+// Set Pieces
+model SetPiece {
+  id              String   @id @default(uuid())
+  matchId         String?
+  match           Match?   @relation(fields: [matchId], references: [id], onDelete: SetNull)
+
+  name            String
+  type            String   // corner, freeKick, penalty, throwIn, goalKick
+  description     String?
+  diagram         String?  // JSON or URL to diagram
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastSyncedAt    DateTime @default(now())
+
+  roles           SetPieceRole[]
+
+  @@index([matchId])
+  @@index([type])
+}
+
+// Set Piece Roles (which player does what)
+model SetPieceRole {
+  id              String   @id @default(uuid())
+  setPieceId      String
+  setPiece        SetPiece @relation(fields: [setPieceId], references: [id], onDelete: Cascade)
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  role            String   // taker, target, blocker, runner
+  position        String?
+
+  @@unique([setPieceId, playerId, role])
+  @@index([setPieceId])
+  @@index([playerId])
+}
+
+// Event Log for tracking changes
+model EventLog {
+  id              String   @id @default(uuid())
+  userId          String
+  user            ClubUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchId         String?
+  match           Match?   @relation(fields: [matchId], references: [id], onDelete: SetNull)
+
+  eventType       String   // substitution, lineupChange, noteAdded, noteUpdated, playerAdded, etc.
+  entityType      String   // player, match, lineup, note, setPiece, substitution
+  entityId        String
+
+  oldValue        String?  // JSON snapshot of old state
+  newValue        String?  // JSON snapshot of new state
+
+  deviceId        String?  // Device that made the change
+  timestamp       DateTime @default(now())
+
+  @@index([userId])
+  @@index([matchId])
+  @@index([eventType])
+  @@index([timestamp])
+}
+
+// Sync State (for offline sync)
+model SyncState {
+  id              String   @id @default(uuid())
+  deviceId        String   @unique
+  userId          String
+
+  lastSyncAt      DateTime @default(now())
+  syncVersion     Int      @default(1)
+
+  @@index([userId])
+  @@index([deviceId])
+}

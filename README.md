@@ -37,13 +37,24 @@ A professional web application built with React, TypeScript, and Tailwind CSS fo
 
 ## Technology Stack
 
+### Frontend
 - **React 18** - UI framework
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Styling
 - **Vite** - Build tool
 - **React Router** - Navigation
 - **Lucide React** - Icons
-- **localStorage** - Data persistence
+
+### Backend
+- **Fastify** - Fast and low overhead web framework
+- **TypeScript** - Type safety
+- **JSON File Storage** - Simple file-based database
+- **Swagger/OpenAPI** - API documentation
+- **CORS** - Cross-origin resource sharing
+
+### Data Persistence
+- **API Backend** - Primary data storage (default)
+- **localStorage** - Fallback and offline mode
 
 ## Algorithms
 
@@ -64,19 +75,83 @@ When making a substitution, the app:
 4. Calculates position changes for all affected players
 5. Shows preview with score delta
 
-## Installation
+## Installation & Setup
+
+### Prerequisites
+- Node.js 18+ installed
+- npm or yarn package manager
+
+### Quick Start
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd Quick-Substitution-app
+```
+
+2. **Install frontend dependencies**
+```bash
+npm install
+```
+
+3. **Install backend dependencies**
+```bash
+cd backend
+npm install
+cd ..
+```
+
+4. **Configure environment variables**
+
+Frontend (.env):
+```bash
+cp .env.example .env
+# Edit .env if needed - defaults are fine for local development
+```
+
+Backend (backend/.env):
+```bash
+cp backend/.env.example backend/.env
+# Edit backend/.env if needed - defaults are fine for local development
+```
+
+5. **Run the application**
+
+**Option 1: Run both frontend and backend (recommended)**
+
+Terminal 1 - Backend:
+```bash
+cd backend
+npm run dev
+```
+
+Terminal 2 - Frontend:
+```bash
+npm run dev
+```
+
+**Option 2: Run frontend only (offline mode)**
+```bash
+# Set VITE_USE_API=false in .env to use localStorage
+npm run dev
+```
+
+6. **Access the application**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:3001
+- API Documentation: http://localhost:3001/docs
+
+### Build for Production
 
 ```bash
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Build for production
+# Build frontend
 npm run build
 
-# Preview production build
+# Build backend
+cd backend
+npm run build
+
+# Preview production frontend
 npm run preview
 ```
 
@@ -158,6 +233,39 @@ Every assignment considers:
 }
 ```
 
+## API Endpoints
+
+The backend provides a RESTful API with the following endpoints:
+
+### Players
+- `GET /api/players` - Get all players
+- `GET /api/players/:id` - Get single player
+- `POST /api/players` - Create player
+- `PUT /api/players/:id` - Update player
+- `DELETE /api/players/:id` - Delete player
+
+### Lineups
+- `GET /api/lineups/current` - Get current lineup
+- `POST /api/lineups/current` - Save current lineup
+- `POST /api/lineups/optimize` - Optimize lineup for given positions
+- `GET /api/lineups/game-state` - Get game state
+- `POST /api/lineups/game-state` - Save game state
+- `POST /api/lineups/substitution-preview` - Preview substitution effect
+
+### Set Pieces
+- `GET /api/set-pieces` - Get all set piece layouts
+- `GET /api/set-pieces/defaults` - Get default layouts
+- `GET /api/set-pieces/:id` - Get single layout
+- `POST /api/set-pieces` - Create layout
+- `PUT /api/set-pieces/:id` - Update layout
+- `DELETE /api/set-pieces/:id` - Delete layout
+
+### Notes
+- `GET /api/notes/player/:playerId` - Get player notes
+- `PUT /api/notes/player/:playerId` - Update player notes
+
+Full API documentation available at http://localhost:3001/docs when running the backend.
+
 ## Browser Support
 
 - Chrome/Edge (latest)
@@ -166,42 +274,71 @@ Every assignment considers:
 
 ## Data Persistence
 
-All data is stored in browser localStorage:
-- Squad roster
-- Current lineup
-- Game state
-- Substitution history
-- Set piece configurations
+The application supports two modes of data persistence:
 
-Data persists across sessions but is browser-specific.
+### API Mode (Default)
+- Data stored in JSON files on the backend server
+- Located in `backend/data/db.json`
+- Shared across all browser sessions
+- Automatic fallback to localStorage if API unavailable
+
+### Offline Mode
+- Set `VITE_USE_API=false` in frontend `.env`
+- All data stored in browser localStorage
+- Browser-specific, not shared across devices
+- No backend required
 
 ## Development
 
 ### Project Structure
 ```
-src/
-├── components/          # React components
-│   ├── Layout.tsx
-│   ├── PitchView.tsx
-│   ├── PlayerCard.tsx
-│   ├── AddPlayerModal.tsx
-│   ├── SubstitutionPreviewModal.tsx
-│   └── SetPieceView.tsx
-├── pages/              # Main page components
-│   ├── SquadManager.tsx
-│   ├── LineupBuilder.tsx
-│   ├── InGame.tsx
-│   └── SetPieces.tsx
-├── types/              # TypeScript interfaces
-│   └── index.ts
-├── utils/              # Utility functions
-│   ├── hungarian.ts    # Hungarian algorithm
-│   ├── optimizer.ts    # Lineup optimization
-│   ├── storage.ts      # localStorage helpers
-│   └── setPieces.ts    # Set piece layouts
-├── App.tsx             # Main app component
-├── main.tsx            # Entry point
-└── index.css           # Global styles
+Quick-Substitution-app/
+├── backend/                  # Backend API
+│   ├── src/
+│   │   ├── routes/          # API route handlers
+│   │   │   ├── players.ts
+│   │   │   ├── lineups.ts
+│   │   │   ├── set-pieces.ts
+│   │   │   └── notes.ts
+│   │   ├── db/              # Database layer
+│   │   │   └── storage.ts   # JSON file storage
+│   │   ├── utils/           # Shared utilities
+│   │   │   ├── optimizer.ts # Lineup optimization
+│   │   │   ├── hungarian.ts # Hungarian algorithm
+│   │   │   └── setPieces.ts # Default layouts
+│   │   ├── types/           # TypeScript types
+│   │   │   └── index.ts
+│   │   └── server.ts        # Main server file
+│   ├── data/                # JSON database files
+│   ├── package.json
+│   └── tsconfig.json
+├── src/                     # Frontend React app
+│   ├── api/                 # API client
+│   │   └── client.ts        # Backend API calls
+│   ├── components/          # React components
+│   │   ├── Layout.tsx
+│   │   ├── PitchView.tsx
+│   │   ├── PlayerCard.tsx
+│   │   ├── AddPlayerModal.tsx
+│   │   ├── SubstitutionPreviewModal.tsx
+│   │   └── SetPieceView.tsx
+│   ├── pages/              # Main page components
+│   │   ├── SquadManager.tsx
+│   │   ├── LineupBuilder.tsx
+│   │   ├── InGame.tsx
+│   │   └── SetPieces.tsx
+│   ├── types/              # TypeScript interfaces
+│   │   └── index.ts
+│   ├── utils/              # Utility functions
+│   │   ├── hungarian.ts    # Hungarian algorithm
+│   │   ├── optimizer.ts    # Lineup optimization
+│   │   ├── storage.ts      # Storage abstraction
+│   │   └── setPieces.ts    # Set piece layouts
+│   ├── App.tsx             # Main app component
+│   ├── main.tsx            # Entry point
+│   └── index.css           # Global styles
+├── package.json
+└── README.md
 ```
 
 ## Future Enhancements

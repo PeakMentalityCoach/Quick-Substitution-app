@@ -1,90 +1,136 @@
-import { Edit, Trash2 } from 'lucide-react';
-import { Player } from '../types';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Edit2, Trash2, AlertCircle } from 'lucide-react';
+import type { Player } from '../types';
 
 interface PlayerCardProps {
   player: Player;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onClick?: () => void;
   showActions?: boolean;
 }
 
-export default function PlayerCard({
+export function PlayerCard({
   player,
   onEdit,
   onDelete,
-  showActions = true,
+  onClick,
+  showActions = true
 }: PlayerCardProps) {
-  const avgRating =
-    player.ratings.length > 0
-      ? (player.ratings.reduce((sum, r) => sum + r.rating, 0) / player.ratings.length).toFixed(1)
-      : '0.0';
+  const avgAttribute =
+    Object.values(player.attributes).reduce((sum, val) => sum + val, 0) / 8;
+
+  const getAvgColor = (avg: number) => {
+    if (avg >= 16) return 'text-green-600';
+    if (avg >= 12) return 'text-blue-600';
+    if (avg >= 8) return 'text-yellow-600';
+    return 'text-red-600';
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-            {player.jerseyNumber}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: showActions ? 1.02 : 1 }}
+      onClick={onClick}
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 ${
+        onClick ? 'cursor-pointer' : ''
+      } ${!player.isAvailable ? 'opacity-60' : ''}`}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+            {player.number}
           </div>
           <div>
-            <h3 className="font-bold text-lg text-gray-800">{player.name}</h3>
-            <p className="text-sm text-gray-600">Avg Rating: {avgRating}</p>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+              {player.name}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {player.position}
+            </p>
           </div>
         </div>
 
         {showActions && (
-          <div className="flex gap-2">
-            <button
-              onClick={onEdit}
-              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Edit player"
-            >
-              <Edit size={18} />
-            </button>
-            <button
-              onClick={onDelete}
-              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Delete player"
-            >
-              <Trash2 size={18} />
-            </button>
+          <div className="flex space-x-2">
+            {onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
+                className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      <div className="mb-2">
-        <p className="text-sm font-semibold text-gray-700 mb-1">Positions:</p>
-        <div className="flex flex-wrap gap-1">
-          {player.positions.map((pos) => (
-            <span
-              key={pos}
-              className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium"
-            >
-              {pos}
-            </span>
-          ))}
+      <div className="grid grid-cols-4 gap-2 mb-3">
+        <div className="text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">PAC</p>
+          <p className="font-semibold text-gray-900 dark:text-white">
+            {player.attributes.pace}
+          </p>
+        </div>
+        <div className="text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">SHO</p>
+          <p className="font-semibold text-gray-900 dark:text-white">
+            {player.attributes.shooting}
+          </p>
+        </div>
+        <div className="text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">PAS</p>
+          <p className="font-semibold text-gray-900 dark:text-white">
+            {player.attributes.passing}
+          </p>
+        </div>
+        <div className="text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">DEF</p>
+          <p className="font-semibold text-gray-900 dark:text-white">
+            {player.attributes.defending}
+          </p>
         </div>
       </div>
 
-      <div>
-        <p className="text-sm font-semibold text-gray-700 mb-1">Ratings:</p>
-        <div className="grid grid-cols-2 gap-1 text-xs">
-          {player.ratings.slice(0, 6).map((rating) => (
-            <div
-              key={rating.position}
-              className="flex justify-between bg-gray-50 px-2 py-1 rounded"
-            >
-              <span className="font-medium text-gray-700">{rating.position}:</span>
-              <span className="text-gray-900 font-bold">{rating.rating}</span>
-            </div>
-          ))}
-          {player.ratings.length > 6 && (
-            <div className="col-span-2 text-center text-gray-500 text-xs py-1">
-              +{player.ratings.length - 6} more
-            </div>
-          )}
-        </div>
+      <div className="flex items-center justify-between text-sm">
+        <span className={`font-semibold ${getAvgColor(avgAttribute)}`}>
+          AVG: {avgAttribute.toFixed(1)}
+        </span>
+        <span className="text-gray-500 dark:text-gray-400">
+          Fatigue: {player.fatigueLevel}%
+        </span>
       </div>
-    </div>
+
+      {!player.isAvailable && (
+        <div className="mt-2 flex items-center space-x-1 text-red-600 text-sm">
+          <AlertCircle className="w-4 h-4" />
+          <span>Unavailable</span>
+        </div>
+      )}
+
+      {player.notes && (
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+            {player.notes}
+          </p>
+        </div>
+      )}
+    </motion.div>
   );
 }

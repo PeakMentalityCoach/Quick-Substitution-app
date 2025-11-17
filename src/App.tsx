@@ -1,22 +1,30 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import SquadManager from './pages/SquadManager';
-import LineupBuilder from './pages/LineupBuilder';
-import InGame from './pages/InGame';
-import SetPieces from './pages/SetPieces';
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import { PlayersProvider } from './context/PlayersContext';
+import { GameStateProvider } from './context/GameStateContext';
+import { SetPieceProvider } from './context/SetPieceContext';
+import { SettingsProvider } from './context/SettingsContext';
+import { PMCBrandHeader } from './components/PMCBrandHeader';
+import { NavigationBar } from './components/NavigationBar';
+import { Footer } from './components/Footer';
 
-function App() {
+export function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/squad" replace />} />
-        <Route path="/squad" element={<SquadManager />} />
-        <Route path="/lineup" element={<LineupBuilder />} />
-        <Route path="/game" element={<InGame />} />
-        <Route path="/setpieces" element={<SetPieces />} />
-      </Routes>
-    </Layout>
+    <SettingsProvider>
+      <PlayersProvider>
+        <GameStateProvider>
+          <SetPieceProvider>
+            <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+              <PMCBrandHeader />
+              <NavigationBar />
+              <main className="flex-1">
+                <Outlet />
+              </main>
+              <Footer />
+            </div>
+          </SetPieceProvider>
+        </GameStateProvider>
+      </PlayersProvider>
+    </SettingsProvider>
   );
 }
-
-export default App;

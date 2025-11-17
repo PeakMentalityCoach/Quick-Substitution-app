@@ -1,8 +1,10 @@
 {
-  "name": "football-optimizer-app",
+  "name": "pmc-tactical-optimizer",
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "description": "Peak Mentality Coach Tactical Optimizer - Professional football substitution and set-piece manager",
+  "author": "Peak Mentality Coach",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -10,10 +12,14 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.0",
-    "lucide-react": "^0.294.0"
+    "react-router-dom": "^6.20.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
@@ -27,6 +33,7 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
+    "terser": "^5.44.1",
     "typescript": "^5.2.2",
     "vite": "^5.0.8"
   }

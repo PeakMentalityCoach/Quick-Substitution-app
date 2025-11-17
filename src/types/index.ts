@@ -3,12 +3,21 @@ export interface PositionRating {
   rating: number; // 1–10
 }
 
+export interface PlayerNotes {
+  hasInjury: boolean;
+  injurySeverity?: 'minor' | 'moderate' | 'severe';
+  minutesRestriction?: number; // Max minutes allowed
+  safePositions: string[]; // Positions player can safely play
+  allowOptimizerOverride: boolean; // Whether optimizer can ignore restrictions
+}
+
 export interface Player {
   id: string;
   name: string;
   jerseyNumber: number;
   positions: string[];
   ratings: PositionRating[];
+  notes?: PlayerNotes;
 }
 
 export interface PlayerAssignment {

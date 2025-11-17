@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Plus, Download, Upload } from 'lucide-react';
-import { Player } from '../types';
+import { motion } from 'framer-motion';
+import { Plus, Download, Upload, Users } from 'lucide-react';
+import { Player, PlayerNotes } from '../types';
 import { loadData, saveSquad, exportData, importData } from '../utils/storage';
 import AddPlayerModal from '../components/AddPlayerModal';
 import PlayerCard from '../components/PlayerCard';
+import PlayerNotesModal from '../components/PlayerNotesModal';
 
 export default function SquadManager() {
   const [squad, setSquad] = useState<Player[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [notesPlayer, setNotesPlayer] = useState<Player | null>(null);
 
   useEffect(() => {
     const data = loadData();
@@ -30,6 +33,16 @@ export default function SquadManager() {
     saveSquad(newSquad);
     setIsModalOpen(false);
     setEditingPlayer(null);
+  };
+
+  const handleSaveNotes = (notes: PlayerNotes) => {
+    if (notesPlayer) {
+      const newSquad = squad.map((p) =>
+        p.id === notesPlayer.id ? { ...p, notes } : p
+      );
+      setSquad(newSquad);
+      saveSquad(newSquad);
+    }
   };
 
   const handleDeletePlayer = (playerId: string) => {
@@ -60,72 +73,103 @@ export default function SquadManager() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-800">Squad Manager</h2>
-          <p className="text-gray-600 mt-1">Manage your team roster and player ratings</p>
+    <div className="animate-fade-in">
+      {/* Page Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-pmc-green-600"
+      >
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div>
+            <h2 className="text-3xl lg:text-4xl font-bold text-pmc-gray-800">Squad Manager</h2>
+            <p className="text-pmc-gray-600 mt-2">Manage your team roster, player ratings, and notes</p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={exportData}
+              className="flex items-center gap-2 px-4 py-2 bg-pmc-green-600 text-white rounded-lg hover:bg-pmc-green-700 transition-colors shadow-md"
+            >
+              <Download size={18} />
+              <span className="hidden sm:inline">Export</span>
+            </motion.button>
+
+            <motion.label
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 px-4 py-2 bg-pmc-gold-600 text-white rounded-lg hover:bg-pmc-gold-700 transition-colors cursor-pointer shadow-md"
+            >
+              <Upload size={18} />
+              <span className="hidden sm:inline">Import</span>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImport}
+                className="hidden"
+              />
+            </motion.label>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setEditingPlayer(null);
+                setIsModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pmc-green-600 to-pmc-green-500 text-white rounded-lg hover:from-pmc-green-700 hover:to-pmc-green-600 transition-all shadow-lg"
+            >
+              <Plus size={18} />
+              Add Player
+            </motion.button>
+          </div>
         </div>
+      </motion.div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={exportData}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Download size={18} />
-            Export
-          </button>
-
-          <label className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer">
-            <Upload size={18} />
-            Import
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImport}
-              className="hidden"
-            />
-          </label>
-
-          <button
-            onClick={() => {
-              setEditingPlayer(null);
-              setIsModalOpen(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Plus size={18} />
-            Add Player
-          </button>
-        </div>
-      </div>
-
+      {/* Squad Grid or Empty State */}
       {squad.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <Users className="mx-auto text-gray-400 mb-4" size={64} />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No players yet</h3>
-          <p className="text-gray-600 mb-4">Start building your squad by adding players</p>
-          <button
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-2xl shadow-xl p-12 text-center"
+        >
+          <Users className="mx-auto text-pmc-gray-400 mb-4" size={64} />
+          <h3 className="text-2xl font-semibold text-pmc-gray-700 mb-2">No players yet</h3>
+          <p className="text-pmc-gray-600 mb-6">Start building your squad by adding players</p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pmc-green-600 to-pmc-green-500 text-white rounded-lg hover:from-pmc-green-700 hover:to-pmc-green-600 transition-all shadow-lg"
           >
             <Plus size={20} />
             Add Your First Player
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {squad.map((player) => (
-            <PlayerCard
-              key={player.id}
-              player={player}
-              onEdit={() => handleEditPlayer(player)}
-              onDelete={() => handleDeletePlayer(player.id)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-pmc-gray-600">
+              Total: <span className="font-bold text-pmc-green-700">{squad.length}</span> players
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {squad.map((player) => (
+              <PlayerCard
+                key={player.id}
+                player={player}
+                onEdit={() => handleEditPlayer(player)}
+                onDelete={() => handleDeletePlayer(player.id)}
+                onNotes={() => setNotesPlayer(player)}
+              />
+            ))}
+          </div>
+        </>
       )}
 
+      {/* Modals */}
       {isModalOpen && (
         <AddPlayerModal
           player={editingPlayer}
@@ -137,28 +181,15 @@ export default function SquadManager() {
           existingPlayers={squad}
         />
       )}
-    </div>
-  );
-}
 
-function Users({ className, size }: { className?: string; size: number }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
+      {notesPlayer && (
+        <PlayerNotesModal
+          player={notesPlayer}
+          isOpen={!!notesPlayer}
+          onClose={() => setNotesPlayer(null)}
+          onSave={handleSaveNotes}
+        />
+      )}
+    </div>
   );
 }

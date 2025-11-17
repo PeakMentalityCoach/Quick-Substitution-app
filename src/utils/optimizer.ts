@@ -63,11 +63,38 @@ export function optimizeLineup(
 /**
  * Gets a player's rating for a specific position
  * Returns 0 if player cannot play that position
+ * Considers player notes and restrictions
  */
 export function getPlayerRating(player: Player, position: string): number {
   // Check if player can play this position
   if (!player.positions.includes(position)) {
     return 0;
+  }
+
+  // Check player notes for restrictions
+  if (player.notes && !player.notes.allowOptimizerOverride) {
+    // If position is not in safe positions, return 0 or very low rating
+    if (!player.notes.safePositions.includes(position)) {
+      return 0;
+    }
+
+    // Apply injury penalty
+    if (player.notes.hasInjury) {
+      const ratingEntry = player.ratings.find((r) => r.position === position);
+      const baseRating = ratingEntry?.rating || 0;
+
+      // Reduce rating based on injury severity
+      switch (player.notes.injurySeverity) {
+        case 'severe':
+          return Math.max(0, baseRating - 4);
+        case 'moderate':
+          return Math.max(0, baseRating - 2);
+        case 'minor':
+          return Math.max(0, baseRating - 1);
+        default:
+          return baseRating;
+      }
+    }
   }
 
   // Find the rating for this position

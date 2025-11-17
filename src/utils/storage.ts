@@ -12,6 +12,15 @@ export function loadData(): AppData {
     if (stored) {
       const data = JSON.parse(stored) as AppData;
 
+      // Migrate old player data to new format (backward compatibility)
+      if (data.squad) {
+        data.squad = data.squad.map((player) => ({
+          ...player,
+          note: player.note || '',
+          noteAffectsOptimization: player.noteAffectsOptimization ?? false,
+        }));
+      }
+
       // Ensure set piece layouts exist (for backward compatibility)
       if (!data.setPieceLayouts || data.setPieceLayouts.length === 0) {
         data.setPieceLayouts = getDefaultSetPieceLayouts();

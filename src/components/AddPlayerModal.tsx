@@ -91,6 +91,8 @@ export default function AddPlayerModal({
       jerseyNumber: jerseyNum,
       positions: selectedPositions,
       ratings: playerRatings,
+      note: player?.note || '',
+      noteAffectsOptimization: player?.noteAffectsOptimization ?? false,
     };
 
     onSave(newPlayer);

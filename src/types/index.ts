@@ -9,6 +9,8 @@ export interface Player {
   jerseyNumber: number;
   positions: string[];
   ratings: PositionRating[];
+  note?: string;
+  noteAffectsOptimization: boolean;
 }
 
 export interface PlayerAssignment {
@@ -29,8 +31,9 @@ export interface GameState {
 export interface SetPieceLayout {
   id: string;
   name: string;
-  type: 'offensive-corner' | 'defensive-corner' | 'free-kick-central' | 'free-kick-wide' | 'throw-in-attacking' | 'throw-in-defending';
+  type: 'offensive-corner' | 'defensive-corner' | 'free-kick-central' | 'free-kick-wide' | 'throw-in-attacking' | 'throw-in-defending' | 'shot-wall';
   positions: SetPiecePosition[];
+  assignments?: PlayerAssignment[];
 }
 
 export interface SetPiecePosition {
@@ -60,6 +63,35 @@ export interface AppData {
   gameState: GameState | null;
   currentLineup: PlayerAssignment[];
   setPieceLayouts: SetPieceLayout[];
+}
+
+// Note interpretation results
+export interface PlayerNoteInterpretation {
+  forbiddenPositions: string[];
+  ratingPenalty: number; // 0-10, subtracted from all ratings
+  mustSubOutAtMinute?: number;
+  warningMessage?: string;
+}
+
+// Match-day mode structures
+export interface MatchContext {
+  currentMinute: number;
+  score: { home: number; away: number };
+  isHome: boolean;
+  substitutionsRemaining: number;
+}
+
+export interface SetPieceScenario {
+  id: string;
+  layoutId: string;
+  description: string;
+  timestamp: number;
+}
+
+// Drag and drop types
+export interface DragItem {
+  playerId: string;
+  sourcePosition?: string;
 }
 
 // Standard positions used across the app

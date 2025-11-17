@@ -1,29 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Play, RotateCcw } from 'lucide-react';
-import { Player, PlayerAssignment, STANDARD_POSITIONS } from '../types';
-import { loadData, saveLineup, saveGameState } from '../utils/storage';
+import { Sparkles, Play, RotateCcw, Settings } from 'lucide-react';
+import { PlayerAssignment, STANDARD_POSITIONS } from '../types';
 import { optimizeLineup, calculateLineupScore } from '../utils/optimizer';
 import PitchView from '../components/PitchView';
+import { useApp } from '../contexts/AppContext';
+import { PMC_COLORS } from '../constants/brand';
 
 export default function LineupBuilder() {
   const navigate = useNavigate();
-  const [squad, setSquad] = useState<Player[]>([]);
+  const {
+    squad,
+    currentLineup,
+    setCurrentLineup,
+    startGame,
+    useNotesInOptimization,
+    setUseNotesInOptimization,
+  } = useApp();
+
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [lineup, setLineup] = useState<PlayerAssignment[]>([]);
-  const [lineupScore, setLineupScore] = useState(0);
 
   useEffect(() => {
-    const data = loadData();
-    setSquad(data.squad);
-
     // Load existing lineup if available
-    if (data.currentLineup && data.currentLineup.length > 0) {
-      setLineup(data.currentLineup);
-      setSelectedPlayers(data.currentLineup.map((a) => a.playerId));
-      setLineupScore(calculateLineupScore(data.currentLineup, data.squad));
+    if (currentLineup.length > 0) {
+      setLineup(currentLineup);
+      setSelectedPlayers(currentLineup.map((a) => a.playerId));
     }
-  }, []);
+  }, [currentLineup]);
 
   const handlePlayerSelect = (playerId: string) => {
     if (selectedPlayers.includes(playerId)) {
@@ -37,6 +41,8 @@ export default function LineupBuilder() {
     }
   };
 
+  const lineupScore = lineup.length > 0 ? calculateLineupScore(lineup, squad) : 0;
+
   const handleOptimize = () => {
     if (selectedPlayers.length !== 11) {
       alert('Please select exactly 11 players');
@@ -44,15 +50,11 @@ export default function LineupBuilder() {
     }
 
     const players = squad.filter((p) => selectedPlayers.includes(p.id));
-    const positions = STANDARD_POSITIONS.slice(0, 11); // Use first 11 standard positions
+    const positions = STANDARD_POSITIONS.slice(0, 11);
 
-    const optimizedLineup = optimizeLineup(players, positions);
+    const optimizedLineup = optimizeLineup(players, positions, useNotesInOptimization);
     setLineup(optimizedLineup);
-
-    const score = calculateLineupScore(optimizedLineup, squad);
-    setLineupScore(score);
-
-    saveLineup(optimizedLineup);
+    setCurrentLineup(optimizedLineup);
   };
 
   const handleStartGame = () => {
@@ -61,15 +63,7 @@ export default function LineupBuilder() {
       return;
     }
 
-    // Initialize game state
-    const bench = squad.filter((p) => !selectedPlayers.includes(p.id)).map((p) => p.id);
-
-    saveGameState({
-      lineup,
-      bench,
-      substitutions: [],
-    });
-
+    startGame(lineup);
     navigate('/game');
   };
 
@@ -77,8 +71,7 @@ export default function LineupBuilder() {
     if (confirm('Are you sure you want to reset the lineup?')) {
       setSelectedPlayers([]);
       setLineup([]);
-      setLineupScore(0);
-      saveLineup([]);
+      setCurrentLineup([]);
     }
   };
 
@@ -104,7 +97,8 @@ export default function LineupBuilder() {
           <button
             onClick={handleOptimize}
             disabled={selectedPlayers.length !== 11}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            style={{ backgroundColor: PMC_COLORS.primary }}
           >
             <Sparkles size={18} />
             Auto-Optimize
@@ -118,6 +112,28 @@ export default function LineupBuilder() {
             <Play size={18} />
             Start Game
           </button>
+        </div>
+      </div>
+
+      {/* Settings Bar */}
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="flex items-center gap-3">
+          <Settings size={20} style={{ color: PMC_COLORS.primary }} />
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={useNotesInOptimization}
+              onChange={(e) => setUseNotesInOptimization(e.target.checked)}
+              className="w-5 h-5 rounded"
+              style={{ accentColor: PMC_COLORS.primary }}
+            />
+            <span className="font-medium text-gray-700">
+              Use player notes in optimization
+            </span>
+          </label>
+          <span className="text-sm text-gray-500">
+            (When enabled, player notes affect position assignments and ratings)
+          </span>
         </div>
       </div>
 

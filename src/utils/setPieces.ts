@@ -132,6 +132,24 @@ export function getDefaultSetPieceLayouts(): SetPieceLayout[] {
         { id: 'pos-11', label: 'CF', x: 70, y: 60 },
       ],
     },
+    {
+      id: 'shot-wall',
+      name: 'Free Kick Wall (Defending)',
+      type: 'shot-wall',
+      positions: [
+        { id: 'pos-1', label: 'GK', x: 10, y: 50 },
+        { id: 'pos-2', label: 'CB1', x: 18, y: 35 },
+        { id: 'pos-3', label: 'CB2', x: 18, y: 50 },
+        { id: 'pos-4', label: 'LB', x: 18, y: 20 },
+        { id: 'pos-5', label: 'RB', x: 18, y: 65 },
+        { id: 'pos-6', label: 'CDM', x: 18, y: 80 },
+        { id: 'pos-7', label: 'LM', x: 35, y: 15 },
+        { id: 'pos-8', label: 'RM', x: 35, y: 85 },
+        { id: 'pos-9', label: 'CM', x: 50, y: 50 },
+        { id: 'pos-10', label: 'ST', x: 70, y: 40 },
+        { id: 'pos-11', label: 'CF', x: 70, y: 60 },
+      ],
+    },
   ];
 }
 

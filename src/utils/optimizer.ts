@@ -1,15 +1,18 @@
 import { Player, PlayerAssignment, SubstitutionPreview } from '../types';
 import { hungarianAlgorithm, greedyAssignment } from './hungarian';
+import { interpretPlayerNote } from './noteInterpreter';
 
 /**
  * Optimizes player assignments to positions using Hungarian algorithm
  * @param players - List of available players
  * @param positions - List of positions to fill
+ * @param useNotes - Whether to apply note constraints during optimization
  * @returns Optimal player assignments
  */
 export function optimizeLineup(
   players: Player[],
-  positions: string[]
+  positions: string[],
+  useNotes: boolean = true
 ): PlayerAssignment[] {
   if (players.length === 0 || positions.length === 0) {
     return [];
@@ -23,8 +26,27 @@ export function optimizeLineup(
 
   for (const player of players) {
     const row: number[] = [];
+
+    // Get note interpretation if notes should be used
+    const noteInterpretation = useNotes && player.noteAffectsOptimization
+      ? interpretPlayerNote(player.note)
+      : null;
+
     for (const position of positions) {
-      const rating = getPlayerRating(player, position);
+      let rating = getPlayerRating(player, position);
+
+      // Apply note constraints if enabled
+      if (noteInterpretation) {
+        // Check if position is forbidden
+        if (noteInterpretation.forbiddenPositions.includes(position)) {
+          row.push(PENALTY);
+          continue;
+        }
+
+        // Apply rating penalty
+        rating = Math.max(0, rating - noteInterpretation.ratingPenalty);
+      }
+
       if (rating === 0) {
         // Player can't play this position
         row.push(PENALTY);
@@ -101,13 +123,15 @@ export function calculateLineupScore(
  * @param playerOut - Player being substituted out
  * @param playerIn - Player being substituted in
  * @param allPlayers - All players in squad
+ * @param useNotes - Whether to apply note constraints during optimization
  * @returns Preview of the substitution with position changes
  */
 export function optimizeSubstitution(
   currentLineup: PlayerAssignment[],
   playerOut: Player,
   playerIn: Player,
-  allPlayers: Player[]
+  allPlayers: Player[],
+  useNotes: boolean = true
 ): SubstitutionPreview {
   // Get positions from current lineup
   const positions = currentLineup.map((a) => a.position);
@@ -119,8 +143,8 @@ export function optimizeSubstitution(
 
   const newPlayers = allPlayers.filter((p) => newPlayerIds.includes(p.id));
 
-  // Optimize new lineup
-  const newLineup = optimizeLineup(newPlayers, positions);
+  // Optimize new lineup with note constraints
+  const newLineup = optimizeLineup(newPlayers, positions, useNotes);
 
   // Calculate scores
   const oldScore = calculateLineupScore(currentLineup, allPlayers);

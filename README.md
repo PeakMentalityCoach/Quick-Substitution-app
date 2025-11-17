@@ -204,17 +204,163 @@ src/
 └── index.css           # Global styles
 ```
 
+## Tablet UX - Coach Match Mode
+
+A complete tablet-optimized interface designed specifically for iPad and other tablets in landscape orientation. Perfect for real-time match management from the sidelines.
+
+### Features
+
+#### Real-Time Match Management
+- **Live Timer**: Track match time with start/pause/reset controls
+- **Auto-Update Metadata**: Minutes played and fatigue levels update automatically
+- **Substitutions Tracking**: Monitor remaining substitutions (typically 5 per match)
+- **Live Score Calculation**: Real-time team rating based on current lineup
+
+#### Touch-Optimized Interface
+- **48px Minimum Touch Targets**: All buttons and interactive elements meet accessibility standards
+- **Drag-and-Drop**: Rearrange players on the pitch with intuitive touch gestures
+- **Large, Clear Typography**: Montserrat font family for professional readability
+- **Responsive Scaling**: Adapts to different tablet sizes (iPad, iPad Pro, etc.)
+- **Portrait Mode Fallback**: Automatically stacks UI for portrait orientation
+
+#### Quick-Swap Substitution Workflow
+1. **Tap OUT**: Select a player from the lineup to substitute
+2. **Highlight**: System automatically switches to bench view and highlights compatible players
+3. **Tap IN**: Select replacement from the bench
+4. **Preview**: Review position changes, score impact, and affected players
+5. **Confirm**: Execute the substitution with one tap
+
+#### Player Metadata & Notes
+- **Minutes Played**: Auto-tracked for each player
+- **Fatigue Tracking**: Visual fatigue bars (0-100%) with color coding
+- **Bookings**: Track yellow and red cards with one tap
+- **Notes Drawer**: Slide-over drawer for detailed player notes and tactical instructions
+- **Search & Filter**: Quickly find players by name or number
+
+#### Coach Override Mode
+- **Auto-Optimize** (Default): Uses Hungarian algorithm to find optimal positions
+- **Coach Override**: Direct 1-for-1 substitutions maintaining original positions
+- **Visual Indicator**: Clear yellow highlight when override mode is active
+
+#### Three-Tab Navigation
+1. **Lineup Tab**
+   - Pitch view with draggable player positions
+   - List view with detailed player cards
+   - Live metadata displays
+   - Visual formation representation
+
+2. **Bench Tab**
+   - All available substitutes
+   - Compatibility indicators during substitution flow
+   - Sort by name, number, rating, or freshness
+   - Search functionality
+
+3. **Set Pieces Tab**
+   - Pre-configured tactical layouts
+   - Swipe navigation between set pieces
+   - Auto-assignment based on current lineup
+   - Visual position markers
+
+### Technical Implementation
+
+#### Components
+- `TabletMatchView.tsx` - Main container and state orchestrator
+- `TabletLineupView.tsx` - Lineup management with drag-and-drop
+- `TabletBenchView.tsx` - Bench player selection
+- `TabletSetPieceView.tsx` - Set piece visualization
+- `TabletNotesDrawer.tsx` - Slide-over notes panel
+- `TabletSubstitutionFlow.tsx` - Multi-step substitution wizard
+- `TabletNavigation.tsx` - Three-tab navigation component
+
+#### Hooks
+- `useMatchMode.ts` - Complete match state management
+  - Timer control
+  - Player metadata tracking
+  - Substitution flow state
+  - Fatigue calculations
+  - Booking management
+
+#### Styling
+- `tablet.css` - Comprehensive tablet-specific styles
+  - PMC brand colors and Montserrat font
+  - Touch-friendly components
+  - Responsive breakpoints
+  - Accessibility features (high contrast, reduced motion)
+
+#### Animations
+- `tablet.ts` - Animation utilities and configurations
+  - Smooth transitions
+  - Touch feedback
+  - Drag-and-drop effects
+  - Stagger animations
+
+#### Dependencies
+- `@dnd-kit/core` - Drag-and-drop functionality
+- `@dnd-kit/sortable` - Sortable lists
+- `@dnd-kit/utilities` - DnD utilities
+
+### Usage
+
+```tsx
+import TabletMatchView from './tablet/TabletMatchView';
+
+// In your app
+<TabletMatchView
+  gameState={currentGameState}
+  allPlayers={squadPlayers}
+/>
+```
+
+### Integration with Existing App
+
+The tablet UX is a standalone module that can be integrated into the existing app:
+
+1. **Import the component** in your routing or main app file
+2. **Pass game state** from your existing squad/lineup management
+3. **Style loading** - The component automatically imports `tablet.css`
+4. **No conflicts** - Uses separate namespace and doesn't interfere with desktop views
+
+### Responsive Design
+
+**Landscape (Primary)**
+- iPad: 1024×768 and up
+- iPad Pro: 1366×1024
+- Optimized spacing and font sizes for each breakpoint
+
+**Portrait (Fallback)**
+- Stacked layout with scrolling
+- Pitch area gets 60% of vertical space
+- Side panels stack below
+
+### Accessibility
+
+- ✅ WCAG 2.1 Level AA compliant touch targets
+- ✅ High contrast mode support
+- ✅ Reduced motion for vestibular disorders
+- ✅ Keyboard navigation support
+- ✅ ARIA labels and roles
+- ✅ Focus indicators
+
+### Browser Support
+
+- ✅ Safari (iOS 14+)
+- ✅ Chrome (Android tablets)
+- ✅ Edge (Windows tablets)
+- ✅ Firefox (tablet mode)
+
 ## Future Enhancements
 
 Potential features for future versions:
 - Formation templates (4-3-3, 4-4-2, etc.)
-- Match statistics tracking
-- Player fatigue/stamina management
-- Injury status tracking
-- Custom set piece designer
-- Multi-team management
-- Export lineups as images
+- Match statistics tracking and historical data
+- Injury status tracking with return dates
+- Custom set piece designer with save functionality
+- Multi-team management and switching
+- Export lineups and reports as images/PDFs
 - Integration with team management systems
+- Video analysis integration
+- Weather and pitch condition tracking
+- Opposition analysis and scouting reports
 
 ## License
 

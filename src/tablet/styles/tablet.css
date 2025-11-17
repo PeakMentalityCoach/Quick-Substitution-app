@@ -1,0 +1,491 @@
+/**
+ * Tablet-specific styles for Coach Match Mode
+ * Optimized for iPad in landscape orientation
+ * PMC Brand Guidelines: Montserrat font, professional color scheme
+ */
+
+/* Import Montserrat font */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+
+/* Root variables for tablet mode */
+:root {
+  --tablet-min-touch-target: 48px;
+  --tablet-spacing-xs: 8px;
+  --tablet-spacing-sm: 12px;
+  --tablet-spacing-md: 16px;
+  --tablet-spacing-lg: 24px;
+  --tablet-spacing-xl: 32px;
+  --tablet-border-radius: 12px;
+  --tablet-font-size-sm: 14px;
+  --tablet-font-size-base: 16px;
+  --tablet-font-size-lg: 18px;
+  --tablet-font-size-xl: 24px;
+  --tablet-font-size-2xl: 32px;
+
+  /* PMC Brand Colors */
+  --pmc-primary: #16a34a;
+  --pmc-primary-dark: #15803d;
+  --pmc-primary-light: #22c55e;
+  --pmc-secondary: #0ea5e9;
+  --pmc-accent: #f59e0b;
+  --pmc-danger: #ef4444;
+  --pmc-warning: #f59e0b;
+  --pmc-success: #10b981;
+  --pmc-gray-50: #f9fafb;
+  --pmc-gray-100: #f3f4f6;
+  --pmc-gray-200: #e5e7eb;
+  --pmc-gray-300: #d1d5db;
+  --pmc-gray-400: #9ca3af;
+  --pmc-gray-500: #6b7280;
+  --pmc-gray-600: #4b5563;
+  --pmc-gray-700: #374151;
+  --pmc-gray-800: #1f2937;
+  --pmc-gray-900: #111827;
+}
+
+/* Apply Montserrat globally for tablet mode */
+.tablet-mode {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Landscape optimization (iPad and tablets) */
+@media screen and (min-width: 768px) and (orientation: landscape) {
+  .tablet-container {
+    max-width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .tablet-main-content {
+    display: flex;
+    height: calc(100vh - 80px);
+    /* Account for header/nav */
+  }
+}
+
+/* Portrait fallback - stacked layout */
+@media screen and (max-width: 1024px) and (orientation: portrait) {
+  .tablet-main-content {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .tablet-pitch-area {
+    min-height: 60vh;
+  }
+
+  .tablet-side-panel {
+    width: 100% !important;
+    max-height: 40vh;
+  }
+}
+
+/* Touch-friendly buttons */
+.tablet-button {
+  min-height: var(--tablet-min-touch-target);
+  min-width: var(--tablet-min-touch-target);
+  padding: var(--tablet-spacing-sm) var(--tablet-spacing-lg);
+  border-radius: var(--tablet-border-radius);
+  font-size: var(--tablet-font-size-base);
+  font-weight: 600;
+  font-family: 'Montserrat', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tablet-button:active {
+  transform: scale(0.96);
+}
+
+.tablet-button-primary {
+  background-color: var(--pmc-primary);
+  color: white;
+  border: none;
+}
+
+.tablet-button-primary:hover {
+  background-color: var(--pmc-primary-dark);
+}
+
+.tablet-button-secondary {
+  background-color: var(--pmc-secondary);
+  color: white;
+  border: none;
+}
+
+.tablet-button-danger {
+  background-color: var(--pmc-danger);
+  color: white;
+  border: none;
+}
+
+.tablet-button-outline {
+  background-color: transparent;
+  border: 2px solid var(--pmc-gray-300);
+  color: var(--pmc-gray-700);
+}
+
+/* Touch-friendly player cards */
+.tablet-player-card {
+  min-height: 96px;
+  padding: var(--tablet-spacing-md);
+  border-radius: var(--tablet-border-radius);
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tablet-player-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tablet-player-card-selected {
+  border: 3px solid var(--pmc-primary);
+  background: var(--pmc-gray-50);
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.2);
+}
+
+.tablet-player-card-out {
+  border: 3px solid var(--pmc-danger);
+  background: #fef2f2;
+  opacity: 0.7;
+}
+
+.tablet-player-card-in {
+  border: 3px solid var(--pmc-success);
+  background: #f0fdf4;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Jersey number badge */
+.tablet-jersey-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--pmc-primary), var(--pmc-primary-dark));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Metadata badges */
+.tablet-metadata-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: var(--tablet-font-size-sm);
+  font-weight: 600;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.tablet-metadata-minutes {
+  background: var(--pmc-gray-100);
+  color: var(--pmc-gray-700);
+}
+
+.tablet-metadata-yellow {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tablet-metadata-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.tablet-metadata-fatigue {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tablet-metadata-fatigue-high {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Pitch view for tablet */
+.tablet-pitch {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
+  border-radius: var(--tablet-border-radius);
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.tablet-pitch-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tablet-pitch-position {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 72px;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+
+.tablet-pitch-player {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid var(--pmc-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-family: 'Montserrat', sans-serif;
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.tablet-pitch-player:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.tablet-pitch-player-number {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--pmc-gray-800);
+  line-height: 1;
+}
+
+.tablet-pitch-player-position {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--pmc-gray-600);
+  text-transform: uppercase;
+}
+
+/* Drag and drop states */
+.tablet-dragging {
+  opacity: 0.5;
+  cursor: grabbing !important;
+}
+
+.tablet-drag-overlay {
+  opacity: 0.9;
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+}
+
+.tablet-drop-target {
+  border: 3px dashed var(--pmc-secondary);
+  background: rgba(14, 165, 233, 0.1);
+}
+
+/* Navigation tabs */
+.tablet-nav {
+  display: flex;
+  background: white;
+  border-radius: var(--tablet-border-radius);
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: 4px;
+}
+
+.tablet-nav-tab {
+  flex: 1;
+  min-height: var(--tablet-min-touch-target);
+  padding: var(--tablet-spacing-sm) var(--tablet-spacing-md);
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  font-size: var(--tablet-font-size-base);
+  font-weight: 600;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--pmc-gray-600);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.tablet-nav-tab:active {
+  transform: scale(0.96);
+}
+
+.tablet-nav-tab-active {
+  background: var(--pmc-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Notes drawer */
+.tablet-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 400px;
+  background: white;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.tablet-drawer-open {
+  transform: translateX(0);
+}
+
+.tablet-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.tablet-drawer-overlay-visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Substitution flow */
+.tablet-sub-preview {
+  background: white;
+  border-radius: var(--tablet-border-radius);
+  padding: var(--tablet-spacing-lg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.tablet-sub-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pmc-gray-400);
+  font-size: 32px;
+  margin: var(--tablet-spacing-md) 0;
+}
+
+/* Fatigue indicator */
+.tablet-fatigue-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--pmc-gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.tablet-fatigue-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pmc-success), var(--pmc-warning), var(--pmc-danger));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive scaling */
+@media screen and (min-width: 1024px) and (max-width: 1366px) {
+
+  /* Standard iPad landscape */
+  :root {
+    --tablet-font-size-sm: 13px;
+    --tablet-font-size-base: 15px;
+    --tablet-font-size-lg: 17px;
+    --tablet-font-size-xl: 22px;
+    --tablet-font-size-2xl: 28px;
+  }
+}
+
+@media screen and (min-width: 1367px) {
+  /* Larger tablets and iPad Pro */
+  :root {
+    --tablet-font-size-sm: 15px;
+    --tablet-font-size-base: 17px;
+    --tablet-font-size-lg: 20px;
+    --tablet-font-size-xl: 26px;
+    --tablet-font-size-2xl: 36px;
+  }
+}
+
+/* Accessibility */
+.tablet-focus-visible:focus-visible {
+  outline: 3px solid var(--pmc-secondary);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .tablet-player-card {
+    border: 2px solid var(--pmc-gray-900);
+  }
+
+  .tablet-button {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

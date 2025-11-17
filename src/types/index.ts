@@ -9,6 +9,7 @@ export interface Player {
   jerseyNumber: number;
   positions: string[];
   ratings: PositionRating[];
+  notes?: string; // Player-specific notes
 }
 
 export interface PlayerAssignment {

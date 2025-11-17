@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Play, RotateCcw } from 'lucide-react';
 import { Player, PlayerAssignment, STANDARD_POSITIONS } from '../types';
-import { loadData, saveLineup, saveGameState } from '../utils/storage';
-import { optimizeLineup, calculateLineupScore } from '../utils/optimizer';
+import * as api from '../api/client';
+import { calculateLineupScore } from '../utils/optimizer';
 import PitchView from '../components/PitchView';
 
 export default function LineupBuilder() {
@@ -12,18 +12,37 @@ export default function LineupBuilder() {
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [lineup, setLineup] = useState<PlayerAssignment[]>([]);
   const [lineupScore, setLineupScore] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const data = loadData();
-    setSquad(data.squad);
-
-    // Load existing lineup if available
-    if (data.currentLineup && data.currentLineup.length > 0) {
-      setLineup(data.currentLineup);
-      setSelectedPlayers(data.currentLineup.map((a) => a.playerId));
-      setLineupScore(calculateLineupScore(data.currentLineup, data.squad));
-    }
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [players, currentLineup] = await Promise.all([
+        api.getPlayers(),
+        api.getCurrentLineup(),
+      ]);
+
+      setSquad(players);
+
+      // Load existing lineup if available
+      if (currentLineup && currentLineup.length > 0) {
+        setLineup(currentLineup);
+        setSelectedPlayers(currentLineup.map((a) => a.playerId));
+        setLineupScore(calculateLineupScore(currentLineup, players));
+      }
+    } catch (err) {
+      setError('Failed to load data');
+      console.error('Error loading data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePlayerSelect = (playerId: string) => {
     if (selectedPlayers.includes(playerId)) {
@@ -37,52 +56,86 @@ export default function LineupBuilder() {
     }
   };
 
-  const handleOptimize = () => {
+  const handleOptimize = async () => {
     if (selectedPlayers.length !== 11) {
       alert('Please select exactly 11 players');
       return;
     }
 
-    const players = squad.filter((p) => selectedPlayers.includes(p.id));
-    const positions = STANDARD_POSITIONS.slice(0, 11); // Use first 11 standard positions
+    try {
+      const positions = STANDARD_POSITIONS.slice(0, 11); // Use first 11 standard positions
 
-    const optimizedLineup = optimizeLineup(players, positions);
-    setLineup(optimizedLineup);
+      const result = await api.optimizeLineup(selectedPlayers, positions);
+      setLineup(result.lineup);
+      setLineupScore(result.score);
 
-    const score = calculateLineupScore(optimizedLineup, squad);
-    setLineupScore(score);
-
-    saveLineup(optimizedLineup);
+      await api.saveCurrentLineup(result.lineup);
+    } catch (err) {
+      console.error('Error optimizing lineup:', err);
+      alert('Failed to optimize lineup. Please try again.');
+    }
   };
 
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
     if (lineup.length !== 11) {
       alert('Please optimize the lineup first');
       return;
     }
 
-    // Initialize game state
-    const bench = squad.filter((p) => !selectedPlayers.includes(p.id)).map((p) => p.id);
+    try {
+      // Initialize game state
+      const bench = squad.filter((p) => !selectedPlayers.includes(p.id)).map((p) => p.id);
 
-    saveGameState({
-      lineup,
-      bench,
-      substitutions: [],
-    });
+      await api.saveGameState({
+        lineup,
+        bench,
+        substitutions: [],
+      });
 
-    navigate('/game');
+      navigate('/game');
+    } catch (err) {
+      console.error('Error starting game:', err);
+      alert('Failed to start game. Please try again.');
+    }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (confirm('Are you sure you want to reset the lineup?')) {
-      setSelectedPlayers([]);
-      setLineup([]);
-      setLineupScore(0);
-      saveLineup([]);
+      try {
+        setSelectedPlayers([]);
+        setLineup([]);
+        setLineupScore(0);
+        await api.saveCurrentLineup([]);
+      } catch (err) {
+        console.error('Error resetting lineup:', err);
+        alert('Failed to reset lineup. Please try again.');
+      }
     }
   };
 
   const availablePlayers = squad.filter((p) => !selectedPlayers.includes(p.id));
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-gray-600">Loading lineup builder...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+        <p className="font-semibold">Error: {error}</p>
+        <button
+          onClick={loadData}
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>

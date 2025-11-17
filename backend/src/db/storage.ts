@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Player, GameState, PlayerAssignment, SetPieceLayout, AppData, Note } from '../types/index.js';
+import { normalizePosition } from '../utils/optimizer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -111,7 +112,10 @@ export async function deletePlayer(id: string): Promise<boolean> {
  */
 export async function getCurrentLineup(): Promise<PlayerAssignment[]> {
   const data = await loadDatabase();
-  return data.currentLineup;
+  return data.currentLineup.map(a => ({
+    ...a,
+    position: normalizePosition(a.position)
+  }));
 }
 
 /**
@@ -128,7 +132,15 @@ export async function saveCurrentLineup(lineup: PlayerAssignment[]): Promise<voi
  */
 export async function getGameState(): Promise<GameState | null> {
   const data = await loadDatabase();
-  return data.gameState;
+  if (!data.gameState) return null;
+
+  return {
+    ...data.gameState,
+    lineup: data.gameState.lineup.map(a => ({
+      ...a,
+      position: normalizePosition(a.position)
+    }))
+  };
 }
 
 /**

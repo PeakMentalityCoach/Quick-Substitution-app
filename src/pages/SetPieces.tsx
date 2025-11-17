@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Target } from 'lucide-react';
 import { SetPieceLayout, Player, PlayerAssignment } from '../types';
-import { loadData } from '../utils/storage';
+import * as api from '../api/client';
 import SetPieceView from '../components/SetPieceView';
 
 export default function SetPieces() {
@@ -9,24 +9,51 @@ export default function SetPieces() {
   const [selectedLayout, setSelectedLayout] = useState<string>('');
   const [squad, setSquad] = useState<Player[]>([]);
   const [gameLineup, setGameLineup] = useState<PlayerAssignment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const data = loadData();
-    setSquad(data.squad);
-    setSetPieceLayouts(data.setPieceLayouts);
-
-    // Load current lineup if in game
-    if (data.gameState) {
-      setGameLineup(data.gameState.lineup);
-    } else if (data.currentLineup) {
-      setGameLineup(data.currentLineup);
-    }
-
-    // Select first layout by default
-    if (data.setPieceLayouts.length > 0) {
-      setSelectedLayout(data.setPieceLayouts[0].id);
-    }
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [players, layouts, gameState, currentLineup] = await Promise.all([
+        api.getPlayers(),
+        api.getSetPieceLayouts(),
+        api.getGameState(),
+        api.getCurrentLineup(),
+      ]);
+
+      setSquad(players);
+
+      // If no layouts exist, load defaults
+      if (layouts.length === 0) {
+        const defaults = await api.getDefaultSetPieceLayouts();
+        setSetPieceLayouts(defaults);
+        if (defaults.length > 0) {
+          setSelectedLayout(defaults[0].id);
+        }
+      } else {
+        setSetPieceLayouts(layouts);
+        setSelectedLayout(layouts[0].id);
+      }
+
+      // Load current lineup if in game
+      if (gameState) {
+        setGameLineup(gameState.lineup);
+      } else if (currentLineup) {
+        setGameLineup(currentLineup);
+      }
+    } catch (err) {
+      setError('Failed to load set pieces');
+      console.error('Error loading set pieces:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const currentLayout = setPieceLayouts.find((l) => l.id === selectedLayout);
 
@@ -40,6 +67,28 @@ export default function SetPieces() {
       (l) => l.type === 'throw-in-attacking' || l.type === 'throw-in-defending'
     ),
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-gray-600">Loading set pieces...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+        <p className="font-semibold">Error: {error}</p>
+        <button
+          onClick={loadData}
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>

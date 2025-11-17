@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Download, Upload } from 'lucide-react';
 import { Player } from '../types';
-import { loadData, saveSquad, exportData, importData } from '../utils/storage';
+import * as api from '../api/client';
 import AddPlayerModal from '../components/AddPlayerModal';
 import PlayerCard from '../components/PlayerCard';
 
@@ -9,34 +9,55 @@ export default function SquadManager() {
   const [squad, setSquad] = useState<Player[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const data = loadData();
-    setSquad(data.squad);
+    loadSquad();
   }, []);
 
-  const handleSavePlayer = (player: Player) => {
-    let newSquad: Player[];
-
-    if (editingPlayer) {
-      // Update existing player
-      newSquad = squad.map((p) => (p.id === player.id ? player : p));
-    } else {
-      // Add new player
-      newSquad = [...squad, player];
+  const loadSquad = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const players = await api.getPlayers();
+      setSquad(players);
+    } catch (err) {
+      setError('Failed to load players');
+      console.error('Error loading players:', err);
+    } finally {
+      setLoading(false);
     }
-
-    setSquad(newSquad);
-    saveSquad(newSquad);
-    setIsModalOpen(false);
-    setEditingPlayer(null);
   };
 
-  const handleDeletePlayer = (playerId: string) => {
+  const handleSavePlayer = async (player: Player) => {
+    try {
+      if (editingPlayer) {
+        // Update existing player
+        await api.updatePlayer(player.id, player);
+        setSquad(squad.map((p) => (p.id === player.id ? player : p)));
+      } else {
+        // Add new player
+        const created = await api.createPlayer(player);
+        setSquad([...squad, created]);
+      }
+      setIsModalOpen(false);
+      setEditingPlayer(null);
+    } catch (err) {
+      console.error('Error saving player:', err);
+      alert('Failed to save player. Please try again.');
+    }
+  };
+
+  const handleDeletePlayer = async (playerId: string) => {
     if (confirm('Are you sure you want to delete this player?')) {
-      const newSquad = squad.filter((p) => p.id !== playerId);
-      setSquad(newSquad);
-      saveSquad(newSquad);
+      try {
+        await api.deletePlayer(playerId);
+        setSquad(squad.filter((p) => p.id !== playerId));
+      } catch (err) {
+        console.error('Error deleting player:', err);
+        alert('Failed to delete player. Please try again.');
+      }
     }
   };
 
@@ -45,19 +66,73 @@ export default function SquadManager() {
     setIsModalOpen(true);
   };
 
+  const handleExport = async () => {
+    try {
+      const data = {
+        squad,
+        timestamp: new Date().toISOString(),
+      };
+      const dataStr = JSON.stringify(data, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `squad-export-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exporting data:', err);
+      alert('Failed to export data.');
+    }
+  };
+
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       try {
-        await importData(file);
-        const data = loadData();
-        setSquad(data.squad);
-        alert('Data imported successfully!');
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        // Import players via API
+        if (data.squad && Array.isArray(data.squad)) {
+          for (const player of data.squad) {
+            await api.createPlayer(player);
+          }
+          await loadSquad();
+          alert('Data imported successfully!');
+        } else {
+          alert('Invalid file format.');
+        }
       } catch (error) {
+        console.error('Error importing data:', error);
         alert('Error importing data. Please check the file format.');
       }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-gray-600">Loading players...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+        <p className="font-semibold">Error: {error}</p>
+        <button
+          onClick={loadSquad}
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -69,7 +144,7 @@ export default function SquadManager() {
 
         <div className="flex gap-2">
           <button
-            onClick={exportData}
+            onClick={handleExport}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Download size={18} />

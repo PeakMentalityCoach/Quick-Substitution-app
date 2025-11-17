@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeftRight, History, RotateCcw } from 'lucide-react';
 import { Player, GameState, SubstitutionPreview } from '../types';
-import { loadData, saveGameState } from '../utils/storage';
-import { optimizeSubstitution, calculateLineupScore } from '../utils/optimizer';
+import * as api from '../api/client';
+import { calculateLineupScore } from '../utils/optimizer';
 import PitchView from '../components/PitchView';
 import SubstitutionPreviewModal from '../components/SubstitutionPreviewModal';
 
@@ -13,18 +13,37 @@ export default function InGame() {
   const [playerIn, setPlayerIn] = useState<string>('');
   const [preview, setPreview] = useState<SubstitutionPreview | null>(null);
   const [lineupScore, setLineupScore] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const data = loadData();
-    setSquad(data.squad);
-
-    if (data.gameState) {
-      setGameState(data.gameState);
-      setLineupScore(calculateLineupScore(data.gameState.lineup, data.squad));
-    }
+    loadData();
   }, []);
 
-  const handlePreviewSubstitution = () => {
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [players, state] = await Promise.all([
+        api.getPlayers(),
+        api.getGameState(),
+      ]);
+
+      setSquad(players);
+
+      if (state) {
+        setGameState(state);
+        setLineupScore(calculateLineupScore(state.lineup, players));
+      }
+    } catch (err) {
+      setError('Failed to load game data');
+      console.error('Error loading game data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePreviewSubstitution = async () => {
     if (!playerOut || !playerIn) {
       alert('Please select both players for substitution');
       return;
@@ -35,65 +54,93 @@ export default function InGame() {
       return;
     }
 
-    const pOut = squad.find((p) => p.id === playerOut);
-    const pIn = squad.find((p) => p.id === playerIn);
+    try {
+      const substitutionPreview = await api.getSubstitutionPreview(
+        gameState.lineup,
+        playerOut,
+        playerIn
+      );
 
-    if (!pOut || !pIn) {
-      alert('Invalid player selection');
-      return;
+      setPreview(substitutionPreview);
+    } catch (err) {
+      console.error('Error previewing substitution:', err);
+      alert('Failed to preview substitution. Please try again.');
     }
-
-    const substitutionPreview = optimizeSubstitution(
-      gameState.lineup,
-      pOut,
-      pIn,
-      squad
-    );
-
-    setPreview(substitutionPreview);
   };
 
-  const handleConfirmSubstitution = () => {
+  const handleConfirmSubstitution = async () => {
     if (!preview || !gameState) return;
 
-    const newGameState: GameState = {
-      lineup: preview.newLineup,
-      bench: [...gameState.bench.filter((id) => id !== playerIn), playerOut],
-      substitutions: [
-        ...gameState.substitutions,
-        {
-          out: playerOut,
-          in: playerIn,
-          timestamp: Date.now(),
-        },
-      ],
-    };
-
-    setGameState(newGameState);
-    saveGameState(newGameState);
-    setLineupScore(calculateLineupScore(newGameState.lineup, squad));
-
-    setPreview(null);
-    setPlayerOut('');
-    setPlayerIn('');
-  };
-
-  const handleResetGame = () => {
-    if (confirm('Are you sure you want to reset the game? This will clear all substitutions.')) {
-      const data = loadData();
-      const resetGameState: GameState = {
-        lineup: data.currentLineup,
-        bench: squad.filter((p) => !data.currentLineup.find((a) => a.playerId === p.id)).map((p) => p.id),
-        substitutions: [],
+    try {
+      const newGameState: GameState = {
+        lineup: preview.newLineup,
+        bench: [...gameState.bench.filter((id) => id !== playerIn), playerOut],
+        substitutions: [
+          ...gameState.substitutions,
+          {
+            out: playerOut,
+            in: playerIn,
+            timestamp: Date.now(),
+          },
+        ],
       };
 
-      setGameState(resetGameState);
-      saveGameState(resetGameState);
-      setLineupScore(calculateLineupScore(resetGameState.lineup, squad));
+      await api.saveGameState(newGameState);
+      setGameState(newGameState);
+      setLineupScore(calculateLineupScore(newGameState.lineup, squad));
+
+      setPreview(null);
       setPlayerOut('');
       setPlayerIn('');
+    } catch (err) {
+      console.error('Error confirming substitution:', err);
+      alert('Failed to save substitution. Please try again.');
     }
   };
+
+  const handleResetGame = async () => {
+    if (confirm('Are you sure you want to reset the game? This will clear all substitutions.')) {
+      try {
+        const currentLineup = await api.getCurrentLineup();
+        const resetGameState: GameState = {
+          lineup: currentLineup,
+          bench: squad.filter((p) => !currentLineup.find((a) => a.playerId === p.id)).map((p) => p.id),
+          substitutions: [],
+        };
+
+        await api.saveGameState(resetGameState);
+        setGameState(resetGameState);
+        setLineupScore(calculateLineupScore(resetGameState.lineup, squad));
+        setPlayerOut('');
+        setPlayerIn('');
+      } catch (err) {
+        console.error('Error resetting game:', err);
+        alert('Failed to reset game. Please try again.');
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-gray-600">Loading game...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+        <p className="font-semibold">Error: {error}</p>
+        <button
+          onClick={loadData}
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (!gameState) {
     return (

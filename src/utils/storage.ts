@@ -1,12 +1,14 @@
 import { Player, GameState, PlayerAssignment, SetPieceLayout, AppData } from '../types';
 import { getDefaultSetPieceLayouts } from './setPieces';
+import * as api from '../api/client';
 
 const STORAGE_KEY = 'football-optimizer-data';
+const USE_API = import.meta.env.VITE_USE_API !== 'false'; // Use API by default
 
 /**
- * Loads app data from localStorage
+ * Loads app data from localStorage (fallback)
  */
-export function loadData(): AppData {
+function loadDataFromLocalStorage(): AppData {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -33,9 +35,40 @@ export function loadData(): AppData {
 }
 
 /**
- * Saves app data to localStorage
+ * Loads app data from API or localStorage fallback
  */
-export function saveData(data: AppData): void {
+export async function loadData(): Promise<AppData> {
+  if (!USE_API) {
+    return loadDataFromLocalStorage();
+  }
+
+  try {
+    const [squad, currentLineup, gameState, setPieceLayouts] = await Promise.all([
+      api.getPlayers(),
+      api.getCurrentLineup(),
+      api.getGameState(),
+      api.getSetPieceLayouts(),
+    ]);
+
+    // If no set piece layouts, get defaults
+    const layouts = setPieceLayouts.length > 0 ? setPieceLayouts : await api.getDefaultSetPieceLayouts();
+
+    return {
+      squad,
+      gameState,
+      currentLineup,
+      setPieceLayouts: layouts,
+    };
+  } catch (error) {
+    console.warn('Failed to load from API, falling back to localStorage:', error);
+    return loadDataFromLocalStorage();
+  }
+}
+
+/**
+ * Saves app data to localStorage (fallback)
+ */
+function saveDataToLocalStorage(data: AppData): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
@@ -44,43 +77,104 @@ export function saveData(data: AppData): void {
 }
 
 /**
- * Saves squad to localStorage
+ * Saves app data to API or localStorage fallback
  */
-export function saveSquad(squad: Player[]): void {
-  const data = loadData();
-  data.squad = squad;
-  saveData(data);
+export async function saveData(data: AppData): Promise<void> {
+  if (!USE_API) {
+    saveDataToLocalStorage(data);
+    return;
+  }
+
+  try {
+    // Save all data in parallel
+    await Promise.all([
+      api.saveCurrentLineup(data.currentLineup),
+      api.saveGameState(data.gameState),
+    ]);
+
+    // Also save to localStorage as backup
+    saveDataToLocalStorage(data);
+  } catch (error) {
+    console.warn('Failed to save to API, falling back to localStorage:', error);
+    saveDataToLocalStorage(data);
+  }
 }
 
 /**
- * Saves game state to localStorage
+ * Saves squad to storage
  */
-export function saveGameState(gameState: GameState | null): void {
-  const data = loadData();
-  data.gameState = gameState;
-  saveData(data);
+export async function saveSquad(squad: Player[]): Promise<void> {
+  if (!USE_API) {
+    const data = loadDataFromLocalStorage();
+    data.squad = squad;
+    saveDataToLocalStorage(data);
+    return;
+  }
+
+  // When using API, players are saved individually via the API client
+  // This function is kept for compatibility but doesn't need to do anything
+  // as players are created/updated via api.createPlayer() and api.updatePlayer()
 }
 
 /**
- * Saves current lineup to localStorage
+ * Saves game state to storage
  */
-export function saveLineup(lineup: PlayerAssignment[]): void {
-  const data = loadData();
-  data.currentLineup = lineup;
-  saveData(data);
+export async function saveGameState(gameState: GameState | null): Promise<void> {
+  if (!USE_API) {
+    const data = loadDataFromLocalStorage();
+    data.gameState = gameState;
+    saveDataToLocalStorage(data);
+    return;
+  }
+
+  try {
+    await api.saveGameState(gameState);
+  } catch (error) {
+    console.warn('Failed to save game state to API, falling back to localStorage:', error);
+    const data = loadDataFromLocalStorage();
+    data.gameState = gameState;
+    saveDataToLocalStorage(data);
+  }
 }
 
 /**
- * Saves set piece layouts to localStorage
+ * Saves current lineup to storage
  */
-export function saveSetPieceLayouts(layouts: SetPieceLayout[]): void {
-  const data = loadData();
-  data.setPieceLayouts = layouts;
-  saveData(data);
+export async function saveLineup(lineup: PlayerAssignment[]): Promise<void> {
+  if (!USE_API) {
+    const data = loadDataFromLocalStorage();
+    data.currentLineup = lineup;
+    saveDataToLocalStorage(data);
+    return;
+  }
+
+  try {
+    await api.saveCurrentLineup(lineup);
+  } catch (error) {
+    console.warn('Failed to save lineup to API, falling back to localStorage:', error);
+    const data = loadDataFromLocalStorage();
+    data.currentLineup = lineup;
+    saveDataToLocalStorage(data);
+  }
 }
 
 /**
- * Clears all data from localStorage
+ * Saves set piece layouts to storage
+ */
+export async function saveSetPieceLayouts(layouts: SetPieceLayout[]): Promise<void> {
+  if (!USE_API) {
+    const data = loadDataFromLocalStorage();
+    data.setPieceLayouts = layouts;
+    saveDataToLocalStorage(data);
+    return;
+  }
+
+  // When using API, set pieces are saved individually via the API client
+  // This function is kept for compatibility
+}
+
+/**
+ * Clears all data from storage
  */
 export function clearData(): void {
   try {

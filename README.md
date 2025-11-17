@@ -64,9 +64,24 @@ When making a substitution, the app:
 4. Calculates position changes for all affected players
 5. Shows preview with score delta
 
+## Project Organization
+
+This project is organized into separate frontend and backend directories:
+
+```
+Quick-Substitution-app/
+├── frontend/          # React + TypeScript frontend application
+├── backend/           # Node.js + Express backend API
+└── README.md          # This file
+```
+
 ## Installation
 
+### Frontend Setup
+
 ```bash
+cd frontend
+
 # Install dependencies
 npm install
 
@@ -78,6 +93,27 @@ npm run build
 
 # Preview production build
 npm run preview
+```
+
+### Backend Setup
+
+```bash
+cd backend
+
+# Install dependencies
+npm install
+
+# Create .env file
+cp .env.example .env
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
 ```
 
 ## Usage Guide
@@ -177,31 +213,53 @@ Data persists across sessions but is browser-specific.
 
 ## Development
 
-### Project Structure
+### Frontend Structure
 ```
-src/
-├── components/          # React components
-│   ├── Layout.tsx
-│   ├── PitchView.tsx
-│   ├── PlayerCard.tsx
-│   ├── AddPlayerModal.tsx
-│   ├── SubstitutionPreviewModal.tsx
-│   └── SetPieceView.tsx
-├── pages/              # Main page components
-│   ├── SquadManager.tsx
-│   ├── LineupBuilder.tsx
-│   ├── InGame.tsx
-│   └── SetPieces.tsx
-├── types/              # TypeScript interfaces
-│   └── index.ts
-├── utils/              # Utility functions
-│   ├── hungarian.ts    # Hungarian algorithm
-│   ├── optimizer.ts    # Lineup optimization
-│   ├── storage.ts      # localStorage helpers
-│   └── setPieces.ts    # Set piece layouts
-├── App.tsx             # Main app component
-├── main.tsx            # Entry point
-└── index.css           # Global styles
+frontend/
+├── src/
+│   ├── components/          # React components
+│   │   ├── Layout.tsx
+│   │   ├── PitchView.tsx
+│   │   ├── PlayerCard.tsx
+│   │   ├── AddPlayerModal.tsx
+│   │   ├── SubstitutionPreviewModal.tsx
+│   │   └── SetPieceView.tsx
+│   ├── pages/              # Main page components
+│   │   ├── SquadManager.tsx
+│   │   ├── LineupBuilder.tsx
+│   │   ├── InGame.tsx
+│   │   └── SetPieces.tsx
+│   ├── types/              # TypeScript interfaces
+│   │   └── index.ts
+│   ├── utils/              # Utility functions
+│   │   ├── hungarian.ts    # Hungarian algorithm
+│   │   ├── optimizer.ts    # Lineup optimization
+│   │   ├── storage.ts      # localStorage helpers
+│   │   └── setPieces.ts    # Set piece layouts
+│   ├── App.tsx             # Main app component
+│   ├── main.tsx            # Entry point
+│   └── index.css           # Global styles
+├── index.html
+├── package.json
+├── vite.config.ts
+└── tsconfig.json
+```
+
+### Backend Structure
+```
+backend/
+├── src/
+│   ├── controllers/    # Request handlers
+│   ├── routes/         # API routes
+│   ├── models/         # Data models
+│   ├── services/       # Business logic
+│   ├── utils/          # Utility functions
+│   ├── middleware/     # Custom middleware
+│   └── index.ts        # Application entry point
+├── dist/               # Compiled JavaScript (generated)
+├── package.json
+├── tsconfig.json
+└── .env.example        # Environment variables template
 ```
 
 ## Future Enhancements

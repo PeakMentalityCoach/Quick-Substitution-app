@@ -69,36 +69,44 @@ For all conflicts, the HEAD version (merged backend) was kept because:
 
 I've created and pushed reference branches with the rebased code:
 
-### Available Rebased Branches:
-1. **`claude/players-api-rebased-01VYqhD8oUNn1bZf3rV65LMb`** - Rebased players API branch
-2. **`claude/lineup-api-rebased-01VYqhD8oUNn1bZf3rV65LMb`** - Rebased lineup API branch
+### Latest Rebased Branches (November 2025):
+1. **`claude/players-api-rebased-01ErUNKMyJ8nrJnXrnztyie9`** - Rebased players API branch (latest)
+2. **`claude/lineup-api-rebased-01ErUNKMyJ8nrJnXrnztyie9`** - Rebased lineup API branch (latest)
 
-Both branches are now identical to main (contain all the merged commits) and can merge cleanly without conflicts.
+### Previous Rebased Branches:
+1. `claude/players-api-rebased-01VYqhD8oUNn1bZf3rV65LMb` - Previous rebase
+2. `claude/lineup-api-rebased-01VYqhD8oUNn1bZf3rV65LMb` - Previous rebase
+
+All rebased branches are now identical to main (contain all the merged commits) and can merge cleanly without conflicts.
 
 ## Next Steps - Choose One Option:
 
-### Option 1: Update Original PR Branches (Recommended)
-Run this script to update the original PR branches with the rebased code:
+### Option 1: Update Original PR Branches (Requires Admin Access)
+**Note:** Due to session ID restrictions, force-pushing to the original PR branches requires admin access or manual intervention.
+
+If you have the necessary permissions, run this script to update the original PR branches:
 
 ```bash
 # Fetch the rebased branches
 git fetch origin
 
 # Update Players API branch
-git checkout claude/players-api-rebased-01VYqhD8oUNn1bZf3rV65LMb
-git push origin claude/players-api-rebased-01VYqhD8oUNn1bZf3rV65LMb:claude/create-players-api-01EYWsHojErpLhudtXNGXeQM --force
+git checkout claude/players-api-rebased-01ErUNKMyJ8nrJnXrnztyie9
+git push origin claude/players-api-rebased-01ErUNKMyJ8nrJnXrnztyie9:claude/create-players-api-01EYWsHojErpLhudtXNGXeQM --force
 
 # Update Lineup API branch
-git checkout claude/lineup-api-rebased-01VYqhD8oUNn1bZf3rV65LMb
-git push origin claude/lineup-api-rebased-01VYqhD8oUNn1bZf3rV65LMb:claude/add-lineup-api-01NfERXH1dvwBrKt6nYEb88L --force
+git checkout claude/lineup-api-rebased-01ErUNKMyJ8nrJnXrnztyie9
+git push origin claude/lineup-api-rebased-01ErUNKMyJ8nrJnXrnztyie9:claude/add-lineup-api-01NfERXH1dvwBrKt6nYEb88L --force
 ```
 
 After running this, the existing PRs will be updated and will merge cleanly into main.
 
-### Option 2: Update PR Head Branches
+### Option 2: Update PR Head Branches (Recommended - No Admin Required)
 In the GitHub UI, edit each PR to change the head branch:
-- PR for Players API: Change from `claude/create-players-api-01EYWsHojErpLhudtXNGXeQM` to `claude/players-api-rebased-01VYqhD8oUNn1bZf3rV65LMb`
-- PR for Lineup API: Change from `claude/add-lineup-api-01NfERXH1dvwBrKt6nYEb88L` to `claude/lineup-api-rebased-01VYqhD8oUNn1bZf3rV65LMb`
+- **PR for Players API:** Change head branch from `claude/create-players-api-01EYWsHojErpLhudtXNGXeQM` to `claude/players-api-rebased-01ErUNKMyJ8nrJnXrnztyie9`
+- **PR for Lineup API:** Change head branch from `claude/add-lineup-api-01NfERXH1dvwBrKt6nYEb88L` to `claude/lineup-api-rebased-01ErUNKMyJ8nrJnXrnztyie9`
+
+This approach allows you to keep the existing PR discussions and history while pointing to the rebased code.
 
 ### Option 3: Close Old PRs (Simplest)
 Since both branches are now identical to main (all their functionality was already merged in the backend API PR), you can simply:

@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { PlayerAssignment, GameState, STANDARD_POSITIONS } from '../types/index.js';
 import * as db from '../db/storage.js';
-import { optimizeLineup, optimizeSubstitution, calculateLineupScore } from '../utils/optimizer.js';
+import { optimizeLineup, optimizeSubstitution, calculateLineupScore, normalizePosition } from '../utils/optimizer.js';
 
 /**
  * Validates and auto-corrects positions in a lineup
@@ -13,6 +13,12 @@ function validateAndCorrectLineup(
 ): { lineup: PlayerAssignment[]; corrected: boolean; issues: string[] } {
   const issues: string[] = [];
   let needsCorrection = false;
+
+  // Normalize Norwegian → English positions
+  lineup = lineup.map(a => ({
+    ...a,
+    position: normalizePosition(a.position)
+  }));
 
   // Check for invalid positions
   const invalidPositions = lineup.filter(
@@ -187,14 +193,14 @@ export default async function lineupsRoutes(fastify: FastifyInstance) {
       positions: positions,
     });
 
-    // Validate positions - replace any invalid ones
-    const validPositions = positions.map((pos) => {
-      if (!STANDARD_POSITIONS.includes(pos)) {
+    // Validate positions - normalize and replace any invalid ones
+    const validPositions = positions.map((pos, i) => {
+      const norm = normalizePosition(pos);
+      if (!STANDARD_POSITIONS.includes(norm)) {
         console.log(`⚠️ Replacing invalid position '${pos}' with standard position`);
-        const index = positions.indexOf(pos);
-        return STANDARD_POSITIONS[index] || STANDARD_POSITIONS[0];
+        return STANDARD_POSITIONS[i] || "CM";
       }
-      return pos;
+      return norm;
     });
 
     // Ensure we have the right number of positions
@@ -323,6 +329,14 @@ export default async function lineupsRoutes(fastify: FastifyInstance) {
     }
   }, async (request, reply) => {
     let gameState = request.body as GameState | null;
+
+    // Normalize positions first
+    if (gameState && gameState.lineup && gameState.lineup.length > 0) {
+      gameState.lineup = gameState.lineup.map(a => ({
+        ...a,
+        position: normalizePosition(a.position)
+      }));
+    }
 
     // Validate and auto-correct if needed
     if (gameState && gameState.lineup && gameState.lineup.length > 0) {

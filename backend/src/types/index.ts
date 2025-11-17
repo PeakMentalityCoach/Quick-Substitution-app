@@ -71,18 +71,49 @@ export interface Note {
   updatedAt: number;
 }
 
-// Standard positions used across the app (12 official roles)
+// English & Norwegian shorthand support
 export const STANDARD_POSITIONS = [
-  'GK',   // Goalkeeper
-  'LB',   // Left Back
-  'CB1',  // Center Back 1
-  'CB2',  // Center Back 2
-  'RB',   // Right Back
-  'LM',   // Left Midfielder
-  'CM1',  // Central Midfielder 1
-  'CM2',  // Central Midfielder 2
-  'RM',   // Right Midfielder
-  'LW',   // Left Winger
-  'ST',   // Striker
-  'RW',   // Right Winger
+  // Goalkeeper
+  "GK", "MB",
+
+  // Center backs
+  "CB", "CB1", "CB2", "MS", "VMS", "HMS",
+
+  // Fullbacks / wingbacks
+  "LB", "RB", "VB", "HB",
+
+  // Defensive midfield
+  "CDM", "DMF", "DMC",
+  "DM", "DMB",
+  "ADMF", "ADM", // Norwegian "anker"
+
+  // Central midfield
+  "CM", "CMF", "MC",
+  "IM", "MI", "Sentral", "S",
+
+  // Attacking midfield
+  "CAM", "AM", "OffMF", "OMF",
+
+  // Wingers
+  "LW", "RW", "VK", "HK",
+
+  // Strikers
+  "ST", "CF", "CS", "SP"
 ];
+
+// Mapping Norwegian → English internally
+export const POSITION_MAP: Record<string, string> = {
+  "MB": "GK",
+
+  "MS": "CB", "VMS": "CB", "HMS": "CB",
+
+  "VB": "LB", "HB": "RB",
+
+  "DM": "CDM", "DMB": "CDM", "ADM": "CDM",
+
+  "IM": "CM", "MI": "CM", "Sentral": "CM", "S": "CM",
+
+  "VK": "LW", "HK": "RW",
+
+  "CS": "ST", "SP": "ST",
+};

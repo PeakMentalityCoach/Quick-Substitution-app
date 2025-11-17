@@ -1,5 +1,10 @@
-import { Player, PlayerAssignment, SubstitutionPreview } from '../types/index.js';
+import { Player, PlayerAssignment, SubstitutionPreview, POSITION_MAP } from '../types/index.js';
 import { hungarianAlgorithm, greedyAssignment } from './hungarian.js';
+
+export function normalizePosition(pos: string): string {
+  if (POSITION_MAP[pos]) return POSITION_MAP[pos];
+  return pos;
+}
 
 /**
  * Optimizes player assignments to positions using Hungarian algorithm
@@ -24,7 +29,8 @@ export function optimizeLineup(
   for (const player of players) {
     const row: number[] = [];
     for (const position of positions) {
-      const rating = getPlayerRating(player, position);
+      const normalized = normalizePosition(position);
+      const rating = getPlayerRating(player, normalized);
       if (rating === 0) {
         // Player can't play this position
         row.push(PENALTY);
@@ -52,7 +58,7 @@ export function optimizeLineup(
     if (posIndex !== -1 && posIndex < positions.length) {
       result.push({
         playerId: players[i].id,
-        position: positions[posIndex],
+        position: normalizePosition(positions[posIndex]),
       });
     }
   }
@@ -65,13 +71,18 @@ export function optimizeLineup(
  * Returns 0 if player cannot play that position
  */
 export function getPlayerRating(player: Player, position: string): number {
-  // Check if player can play this position
-  if (!player.positions.includes(position)) {
+  const normalized = normalizePosition(position);
+
+  // Check if player can play this position (check both original and normalized)
+  if (!player.positions.includes(normalized) && !player.positions.includes(position)) {
     return 0;
   }
 
-  // Find the rating for this position
-  const ratingEntry = player.ratings.find((r) => r.position === position);
+  // Find the rating for this position (try normalized first, then original)
+  let ratingEntry = player.ratings.find((r) => normalizePosition(r.position) === normalized);
+  if (!ratingEntry) {
+    ratingEntry = player.ratings.find((r) => r.position === position);
+  }
   return ratingEntry?.rating || 0;
 }
 

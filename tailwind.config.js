@@ -7,12 +7,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        pitch: {
-          green: '#2d5016',
-          light: '#3a6b1f',
-          line: '#ffffff',
-        }
-      }
+        pmc: {
+          primary: '#1a472a',
+          secondary: '#2d5f3f',
+          accent: '#4a9960',
+          light: '#e8f5e9',
+          dark: '#0d2818',
+        },
+      },
+      fontFamily: {
+        sans: ['Montserrat', 'sans-serif'],
+      },
     },
   },
   plugins: [],

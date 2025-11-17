@@ -1,130 +1,74 @@
-import { Player, GameState, PlayerAssignment, SetPieceLayout, AppData } from '../types';
-import { getDefaultSetPieceLayouts } from './setPieces';
+import { Player, SetPieceLayout, AppSettings, LineupPlayer, Formation } from '../types';
 
-const STORAGE_KEY = 'football-optimizer-data';
+const STORAGE_KEYS = {
+  PLAYERS: 'football_optimizer_players',
+  LINEUP: 'football_optimizer_lineup',
+  FORMATION: 'football_optimizer_formation',
+  SET_PIECES: 'football_optimizer_set_pieces',
+  SETTINGS: 'football_optimizer_settings',
+};
 
-/**
- * Loads app data from localStorage
- */
-export function loadData(): AppData {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const data = JSON.parse(stored) as AppData;
-
-      // Ensure set piece layouts exist (for backward compatibility)
-      if (!data.setPieceLayouts || data.setPieceLayouts.length === 0) {
-        data.setPieceLayouts = getDefaultSetPieceLayouts();
-      }
-
-      return data;
-    }
-  } catch (error) {
-    console.error('Error loading data from localStorage:', error);
-  }
-
-  // Return default data
-  return {
-    squad: [],
-    gameState: null,
-    currentLineup: [],
-    setPieceLayouts: getDefaultSetPieceLayouts(),
-  };
-}
-
-/**
- * Saves app data to localStorage
- */
-export function saveData(data: AppData): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (error) {
-    console.error('Error saving data to localStorage:', error);
-  }
-}
-
-/**
- * Saves squad to localStorage
- */
-export function saveSquad(squad: Player[]): void {
-  const data = loadData();
-  data.squad = squad;
-  saveData(data);
-}
-
-/**
- * Saves game state to localStorage
- */
-export function saveGameState(gameState: GameState | null): void {
-  const data = loadData();
-  data.gameState = gameState;
-  saveData(data);
-}
-
-/**
- * Saves current lineup to localStorage
- */
-export function saveLineup(lineup: PlayerAssignment[]): void {
-  const data = loadData();
-  data.currentLineup = lineup;
-  saveData(data);
-}
-
-/**
- * Saves set piece layouts to localStorage
- */
-export function saveSetPieceLayouts(layouts: SetPieceLayout[]): void {
-  const data = loadData();
-  data.setPieceLayouts = layouts;
-  saveData(data);
-}
-
-/**
- * Clears all data from localStorage
- */
-export function clearData(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (error) {
-    console.error('Error clearing data from localStorage:', error);
-  }
-}
-
-/**
- * Exports data as JSON file
- */
-export function exportData(): void {
-  const data = loadData();
-  const dataStr = JSON.stringify(data, null, 2);
-  const dataBlob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(dataBlob);
-
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `football-optimizer-${new Date().toISOString().split('T')[0]}.json`;
-  link.click();
-
-  URL.revokeObjectURL(url);
-}
-
-/**
- * Imports data from JSON file
- */
-export function importData(file: File): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string) as AppData;
-        saveData(data);
-        resolve();
-      } catch (error) {
-        reject(new Error('Invalid JSON file'));
-      }
+export const storage = {
+  // Players
+  savePlayers: (players: Player[]): void => {
+    localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(players));
+  },
+  
+  loadPlayers: (): Player[] => {
+    const data = localStorage.getItem(STORAGE_KEYS.PLAYERS);
+    return data ? JSON.parse(data) : [];
+  },
+  
+  // Lineup
+  saveLineup: (lineup: LineupPlayer[]): void => {
+    localStorage.setItem(STORAGE_KEYS.LINEUP, JSON.stringify(lineup));
+  },
+  
+  loadLineup: (): LineupPlayer[] => {
+    const data = localStorage.getItem(STORAGE_KEYS.LINEUP);
+    return data ? JSON.parse(data) : [];
+  },
+  
+  // Formation
+  saveFormation: (formation: Formation): void => {
+    localStorage.setItem(STORAGE_KEYS.FORMATION, JSON.stringify(formation));
+  },
+  
+  loadFormation: (): Formation | null => {
+    const data = localStorage.getItem(STORAGE_KEYS.FORMATION);
+    return data ? JSON.parse(data) : null;
+  },
+  
+  // Set Pieces
+  saveSetPieces: (setPieces: SetPieceLayout[]): void => {
+    localStorage.setItem(STORAGE_KEYS.SET_PIECES, JSON.stringify(setPieces));
+  },
+  
+  loadSetPieces: (): SetPieceLayout[] => {
+    const data = localStorage.getItem(STORAGE_KEYS.SET_PIECES);
+    return data ? JSON.parse(data) : [];
+  },
+  
+  // Settings
+  saveSettings: (settings: AppSettings): void => {
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  },
+  
+  loadSettings: (): AppSettings => {
+    const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    return data ? JSON.parse(data) : {
+      teamName: 'My Team',
+      coachName: 'Coach',
+      maxSubstitutions: 5,
+      gameDuration: 90,
+      defaultFormation: '4-3-3',
     };
-
-    reader.onerror = () => reject(new Error('Error reading file'));
-    reader.readAsText(file);
-  });
-}
+  },
+  
+  // Clear all data
+  clearAll: (): void => {
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+  },
+};

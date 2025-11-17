@@ -1,83 +1,108 @@
-export interface PositionRating {
-  position: string;
-  rating: number; // 1–10
+export type Position = 
+  | 'GK' 
+  | 'CB' | 'LB' | 'RB' | 'LWB' | 'RWB'
+  | 'CDM' | 'CM' | 'CAM' | 'LM' | 'RM'
+  | 'LW' | 'RW' | 'ST' | 'CF';
+
+export type PlayerStatus = 'available' | 'injured' | 'suspended';
+
+export interface PlayerNote {
+  isInjured: boolean;
+  minutesLimit?: number;
+  safePositions?: Position[];
+  excludeFromOptimizer?: boolean;
+  notes?: string;
 }
 
 export interface Player {
   id: string;
   name: string;
-  jerseyNumber: number;
-  positions: string[];
-  ratings: PositionRating[];
+  number: number;
+  preferredPosition: Position;
+  alternativePositions: Position[];
+  skillLevel: number; // 1-10
+  status: PlayerStatus;
+  minutesPlayed: number;
+  notes?: PlayerNote;
 }
 
-export interface PlayerAssignment {
+export interface LineupPlayer {
   playerId: string;
-  position: string;
+  position: Position;
+  x: number;
+  y: number;
 }
 
-export interface GameState {
-  lineup: PlayerAssignment[];
-  bench: string[];
-  substitutions: {
-    out: string;
-    in: string;
-    timestamp: number;
+export interface Formation {
+  name: string;
+  positions: {
+    position: Position;
+    x: number;
+    y: number;
   }[];
 }
 
 export interface SetPieceLayout {
   id: string;
   name: string;
-  type: 'offensive-corner' | 'defensive-corner' | 'free-kick-central' | 'free-kick-wide' | 'throw-in-attacking' | 'throw-in-defending';
-  positions: SetPiecePosition[];
+  type: 'corner' | 'free-kick' | 'throw-in';
+  positions: {
+    playerId: string;
+    x: number;
+    y: number;
+    role: string;
+  }[];
 }
 
-export interface SetPiecePosition {
-  id: string;
-  label: string; // CB1, CB2, RM, LM, ST, KA, PC, etc.
-  x: number; // 0-100 (percentage of pitch width)
-  y: number; // 0-100 (percentage of pitch height)
-}
-
-export interface SubstitutionPreview {
+export interface SubstitutionSuggestion {
   playerOut: Player;
   playerIn: Player;
-  oldLineup: PlayerAssignment[];
-  newLineup: PlayerAssignment[];
-  changes: {
-    playerId: string;
-    oldPosition: string | null;
-    newPosition: string;
-  }[];
-  oldScore: number;
-  newScore: number;
-  scoreDelta: number;
+  position: Position;
+  reason: string;
+  priority: 'high' | 'medium' | 'low';
+  score: number;
 }
 
-export interface AppData {
-  squad: Player[];
-  gameState: GameState | null;
-  currentLineup: PlayerAssignment[];
-  setPieceLayouts: SetPieceLayout[];
+export interface GameState {
+  currentMinute: number;
+  score: { home: number; away: number };
+  substitutionsUsed: number;
+  maxSubstitutions: number;
 }
 
-// Standard positions used across the app
-export const STANDARD_POSITIONS = [
-  'GK',   // Goalkeeper
-  'CB1',  // Center Back 1
-  'CB2',  // Center Back 2
-  'LB',   // Left Back
-  'RB',   // Right Back
-  'CDM',  // Defensive Midfielder
-  'CM',   // Central Midfielder
-  'LM',   // Left Midfielder
-  'RM',   // Right Midfielder
-  'CAM',  // Attacking Midfielder
-  'LW',   // Left Winger
-  'RW',   // Right Winger
-  'ST',   // Striker
-  'CF',   // Center Forward
-  'KA',   // Custom position (from coach's diagram)
-  'PC',   // Custom position (from coach's diagram)
-];
+export interface AppSettings {
+  teamName: string;
+  coachName: string;
+  maxSubstitutions: number;
+  gameDuration: number;
+  defaultFormation: string;
+}
+
+export interface AppContextType {
+  players: Player[];
+  setPlayers: (players: Player[]) => void;
+  addPlayer: (player: Omit<Player, 'id'>) => void;
+  updatePlayer: (id: string, updates: Partial<Player>) => void;
+  deletePlayer: (id: string) => void;
+  
+  lineup: LineupPlayer[];
+  setLineup: (lineup: LineupPlayer[]) => void;
+  
+  formation: Formation | null;
+  setFormation: (formation: Formation) => void;
+  
+  setPieces: SetPieceLayout[];
+  addSetPiece: (setPiece: Omit<SetPieceLayout, 'id'>) => void;
+  updateSetPiece: (id: string, updates: Partial<SetPieceLayout>) => void;
+  deleteSetPiece: (id: string) => void;
+  
+  gameState: GameState;
+  setGameState: (state: Partial<GameState>) => void;
+  
+  settings: AppSettings;
+  updateSettings: (updates: Partial<AppSettings>) => void;
+  
+  getPlayerById: (id: string) => Player | undefined;
+  getAvailablePlayers: () => Player[];
+  getSubstitutionSuggestions: () => SubstitutionSuggestion[];
+}

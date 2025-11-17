@@ -1,175 +1,235 @@
-import { Player, PlayerAssignment, SubstitutionPreview } from '../types';
-import { hungarianAlgorithm, greedyAssignment } from './hungarian';
+import { Player, Position, SubstitutionSuggestion, LineupPlayer } from '../types';
 
 /**
- * Optimizes player assignments to positions using Hungarian algorithm
- * @param players - List of available players
- * @param positions - List of positions to fill
- * @returns Optimal player assignments
+ * Calculate position compatibility score
+ */
+export function getPositionScore(player: Player, position: Position): number {
+  if (player.notes?.isInjured) return 0;
+  
+  // Check if player is excluded from optimizer
+  if (player.notes?.excludeFromOptimizer) return 0;
+  
+  // Check if position is in safe positions (if specified)
+  if (player.notes?.safePositions && player.notes.safePositions.length > 0) {
+    if (!player.notes.safePositions.includes(position)) return 0;
+  }
+  
+  // Preferred position gets full skill score
+  if (player.preferredPosition === position) {
+    return player.skillLevel;
+  }
+  
+  // Alternative positions get 80% of skill score
+  if (player.alternativePositions.includes(position)) {
+    return player.skillLevel * 0.8;
+  }
+  
+  // Position groups for partial compatibility
+  const positionGroups = {
+    defenders: ['CB', 'LB', 'RB', 'LWB', 'RWB'],
+    midfielders: ['CDM', 'CM', 'CAM', 'LM', 'RM'],
+    wingers: ['LW', 'RW', 'LM', 'RM'],
+    forwards: ['ST', 'CF', 'LW', 'RW'],
+  };
+  
+  for (const group of Object.values(positionGroups)) {
+    if (
+      group.includes(player.preferredPosition) && 
+      group.includes(position)
+    ) {
+      return player.skillLevel * 0.5;
+    }
+  }
+  
+  // No compatibility
+  return player.skillLevel * 0.2;
+}
+
+/**
+ * Calculate fatigue factor based on minutes played
+ */
+export function getFatigueFactor(player: Player): number {
+  // Check minutes limit from notes
+  if (player.notes?.minutesLimit) {
+    if (player.minutesPlayed >= player.notes.minutesLimit) {
+      return 0; // Player has reached their limit
+    }
+    
+    const percentagePlayed = player.minutesPlayed / player.notes.minutesLimit;
+    if (percentagePlayed > 0.8) {
+      return 0.5; // High fatigue warning
+    }
+  }
+  
+  // Standard fatigue calculation
+  if (player.minutesPlayed > 75) return 0.6;
+  if (player.minutesPlayed > 60) return 0.8;
+  if (player.minutesPlayed > 45) return 0.9;
+  return 1.0;
+}
+
+/**
+ * Generate substitution suggestions based on current lineup
+ */
+export function generateSubstitutionSuggestions(
+  currentLineup: LineupPlayer[],
+  allPlayers: Player[],
+  currentMinute: number
+): SubstitutionSuggestion[] {
+  const suggestions: SubstitutionSuggestion[] = [];
+  
+  // Get players currently on the field
+  const playersOnField = currentLineup
+    .map(lp => allPlayers.find(p => p.id === lp.playerId))
+    .filter((p): p is Player => p !== undefined);
+  
+  // Get available substitutes (not injured, not on field)
+  const availableSubstitutes = allPlayers.filter(
+    p => 
+      p.status === 'available' && 
+      !p.notes?.isInjured &&
+      !playersOnField.some(pf => pf.id === p.id)
+  );
+  
+  // Evaluate each position
+  for (const lineupPlayer of currentLineup) {
+    const currentPlayer = allPlayers.find(p => p.id === lineupPlayer.playerId);
+    if (!currentPlayer) continue;
+    
+    const position = lineupPlayer.position;
+    let shouldSubstitute = false;
+    let reasons: string[] = [];
+    let priority: 'high' | 'medium' | 'low' = 'low';
+    
+    // Check if player is injured
+    if (currentPlayer.notes?.isInjured) {
+      shouldSubstitute = true;
+      reasons.push('Player is injured');
+      priority = 'high';
+    }
+    
+    // Check minutes limit
+    if (currentPlayer.notes?.minutesLimit && currentPlayer.minutesPlayed >= currentPlayer.notes.minutesLimit) {
+      shouldSubstitute = true;
+      reasons.push(`Reached minutes limit (${currentPlayer.notes.minutesLimit})`);
+      priority = priority === 'high' ? 'high' : 'medium';
+    }
+    
+    // Check fatigue
+    const fatigue = getFatigueFactor(currentPlayer);
+    if (fatigue <= 0.6 && currentMinute > 60) {
+      shouldSubstitute = true;
+      reasons.push('High fatigue level');
+      priority = priority === 'high' ? 'high' : 'medium';
+    }
+    
+    // Check if player is not in safe position
+    if (currentPlayer.notes?.safePositions && currentPlayer.notes.safePositions.length > 0) {
+      if (!currentPlayer.notes.safePositions.includes(position)) {
+        shouldSubstitute = true;
+        reasons.push('Player not in safe position');
+        priority = priority === 'high' ? 'high' : 'medium';
+      }
+    }
+    
+    if (shouldSubstitute) {
+      // Find best replacement
+      const candidates = availableSubstitutes
+        .filter(p => !p.notes?.excludeFromOptimizer)
+        .map(sub => ({
+          player: sub,
+          score: getPositionScore(sub, position) * getFatigueFactor(sub)
+        }))
+        .sort((a, b) => b.score - a.score);
+      
+      if (candidates.length > 0 && candidates[0].score > 0) {
+        suggestions.push({
+          playerOut: currentPlayer,
+          playerIn: candidates[0].player,
+          position,
+          reason: reasons.join(', '),
+          priority,
+          score: candidates[0].score
+        });
+      }
+    }
+  }
+  
+  // Sort by priority and score
+  const priorityOrder = { high: 3, medium: 2, low: 1 };
+  return suggestions.sort((a, b) => {
+    const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+    if (priorityDiff !== 0) return priorityDiff;
+    return b.score - a.score;
+  });
+}
+
+/**
+ * Optimize lineup for given formation
  */
 export function optimizeLineup(
   players: Player[],
-  positions: string[]
-): PlayerAssignment[] {
-  if (players.length === 0 || positions.length === 0) {
-    return [];
-  }
-
-  // Build cost matrix
-  // Cost = negative rating (to convert maximization to minimization)
-  // High penalty if player can't play position
-  const PENALTY = 1000;
-  const costMatrix: number[][] = [];
-
-  for (const player of players) {
-    const row: number[] = [];
-    for (const position of positions) {
-      const rating = getPlayerRating(player, position);
-      if (rating === 0) {
-        // Player can't play this position
-        row.push(PENALTY);
-      } else {
-        // Negative because Hungarian minimizes cost, we want to maximize rating
-        row.push(-rating);
-      }
-    }
-    costMatrix.push(row);
-  }
-
-  // Use Hungarian algorithm
-  let assignment: number[];
-  try {
-    assignment = hungarianAlgorithm(costMatrix);
-  } catch (error) {
-    console.warn('Hungarian algorithm failed, using greedy fallback:', error);
-    assignment = greedyAssignment(costMatrix);
-  }
-
-  // Convert to PlayerAssignment format
-  const result: PlayerAssignment[] = [];
-  for (let i = 0; i < assignment.length; i++) {
-    const posIndex = assignment[i];
-    if (posIndex !== -1 && posIndex < positions.length) {
-      result.push({
-        playerId: players[i].id,
-        position: positions[posIndex],
+  formationPositions: { position: Position; x: number; y: number }[]
+): LineupPlayer[] {
+  const availablePlayers = players.filter(
+    p => p.status === 'available' && !p.notes?.isInjured && !p.notes?.excludeFromOptimizer
+  );
+  
+  const lineup: LineupPlayer[] = [];
+  const usedPlayerIds = new Set<string>();
+  
+  // First pass: assign players to their preferred positions
+  for (const formPos of formationPositions) {
+    const candidates = availablePlayers
+      .filter(p => !usedPlayerIds.has(p.id))
+      .filter(p => {
+        // Check safe positions constraint
+        if (p.notes?.safePositions && p.notes.safePositions.length > 0) {
+          return p.notes.safePositions.includes(formPos.position);
+        }
+        return true;
+      })
+      .map(p => ({
+        player: p,
+        score: getPositionScore(p, formPos.position)
+      }))
+      .sort((a, b) => b.score - a.score);
+    
+    if (candidates.length > 0 && candidates[0].score > 0) {
+      lineup.push({
+        playerId: candidates[0].player.id,
+        position: formPos.position,
+        x: formPos.x,
+        y: formPos.y
       });
+      usedPlayerIds.add(candidates[0].player.id);
     }
   }
-
-  return result;
-}
-
-/**
- * Gets a player's rating for a specific position
- * Returns 0 if player cannot play that position
- */
-export function getPlayerRating(player: Player, position: string): number {
-  // Check if player can play this position
-  if (!player.positions.includes(position)) {
-    return 0;
-  }
-
-  // Find the rating for this position
-  const ratingEntry = player.ratings.find((r) => r.position === position);
-  return ratingEntry?.rating || 0;
-}
-
-/**
- * Calculates the total lineup score (sum of all player ratings in their assigned positions)
- */
-export function calculateLineupScore(
-  lineup: PlayerAssignment[],
-  players: Player[]
-): number {
-  let total = 0;
-
-  for (const assignment of lineup) {
-    const player = players.find((p) => p.id === assignment.playerId);
-    if (player) {
-      const rating = getPlayerRating(player, assignment.position);
-      total += rating;
+  
+  // Second pass: fill remaining positions with best available
+  for (const formPos of formationPositions) {
+    if (lineup.some(lp => lp.position === formPos.position && lp.x === formPos.x && lp.y === formPos.y)) {
+      continue;
     }
-  }
-
-  return total;
-}
-
-/**
- * Optimizes substitution by recalculating best lineup with new player set
- * @param currentLineup - Current player assignments
- * @param playerOut - Player being substituted out
- * @param playerIn - Player being substituted in
- * @param allPlayers - All players in squad
- * @returns Preview of the substitution with position changes
- */
-export function optimizeSubstitution(
-  currentLineup: PlayerAssignment[],
-  playerOut: Player,
-  playerIn: Player,
-  allPlayers: Player[]
-): SubstitutionPreview {
-  // Get positions from current lineup
-  const positions = currentLineup.map((a) => a.position);
-
-  // Create new player pool: remove playerOut, add playerIn
-  const currentPlayerIds = currentLineup.map((a) => a.playerId);
-  const newPlayerIds = currentPlayerIds.filter((id) => id !== playerOut.id);
-  newPlayerIds.push(playerIn.id);
-
-  const newPlayers = allPlayers.filter((p) => newPlayerIds.includes(p.id));
-
-  // Optimize new lineup
-  const newLineup = optimizeLineup(newPlayers, positions);
-
-  // Calculate scores
-  const oldScore = calculateLineupScore(currentLineup, allPlayers);
-  const newScore = calculateLineupScore(newLineup, allPlayers);
-
-  // Find changes
-  const changes: SubstitutionPreview['changes'] = [];
-
-  // Track all players and their position changes
-  const oldPositionMap = new Map<string, string>();
-  for (const assignment of currentLineup) {
-    oldPositionMap.set(assignment.playerId, assignment.position);
-  }
-
-  for (const assignment of newLineup) {
-    const oldPosition = oldPositionMap.get(assignment.playerId) || null;
-
-    // Only record if position changed or it's a new player
-    if (assignment.playerId === playerIn.id || oldPosition !== assignment.position) {
-      changes.push({
-        playerId: assignment.playerId,
-        oldPosition: oldPosition,
-        newPosition: assignment.position,
+    
+    const candidates = availablePlayers
+      .filter(p => !usedPlayerIds.has(p.id))
+      .map(p => ({
+        player: p,
+        score: getPositionScore(p, formPos.position)
+      }))
+      .sort((a, b) => b.score - a.score);
+    
+    if (candidates.length > 0) {
+      lineup.push({
+        playerId: candidates[0].player.id,
+        position: formPos.position,
+        x: formPos.x,
+        y: formPos.y
       });
+      usedPlayerIds.add(candidates[0].player.id);
     }
   }
-
-  return {
-    playerOut,
-    playerIn,
-    oldLineup: currentLineup,
-    newLineup,
-    changes,
-    oldScore,
-    newScore,
-    scoreDelta: newScore - oldScore,
-  };
-}
-
-/**
- * Validates that a lineup has no duplicate positions
- */
-export function validateLineup(lineup: PlayerAssignment[]): boolean {
-  const positions = new Set<string>();
-  for (const assignment of lineup) {
-    if (positions.has(assignment.position)) {
-      return false; // Duplicate position
-    }
-    positions.add(assignment.position);
-  }
-  return true;
+  
+  return lineup;
 }

@@ -1,22 +1,26 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import SquadManager from './pages/SquadManager';
-import LineupBuilder from './pages/LineupBuilder';
-import InGame from './pages/InGame';
-import SetPieces from './pages/SetPieces';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { AppProvider } from './hooks/useAppContext'
+import Dashboard from './pages/Dashboard'
+import LineupPage from './pages/LineupPage'
+import GamePage from './pages/GamePage'
+import SetPiecesPage from './pages/SetPiecesPage'
+import SettingsPage from './pages/SettingsPage'
 
 function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/squad" replace />} />
-        <Route path="/squad" element={<SquadManager />} />
-        <Route path="/lineup" element={<LineupBuilder />} />
-        <Route path="/game" element={<InGame />} />
-        <Route path="/setpieces" element={<SetPieces />} />
-      </Routes>
-    </Layout>
-  );
+    <AppProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/lineup" element={<LineupPage />} />
+          <Route path="/game" element={<GamePage />} />
+          <Route path="/set-pieces" element={<SetPiecesPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AppProvider>
+  )
 }
 
-export default App;
+export default App

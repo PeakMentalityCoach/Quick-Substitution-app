@@ -102,18 +102,46 @@ export const STANDARD_POSITIONS = [
 ];
 
 // Mapping Norwegian → English internally
-export const POSITION_MAP: Record<string, string> = {
-  "MB": "GK",
+export const STANDARD_POSITIONS = [
+  // Defensive Line
+  'GK',
 
-  "MS": "CB", "VMS": "CB", "HMS": "CB",
+  'LB',
+  'CB',
+  'CB1',
+  'CB2',
+  'RB',
 
-  "VB": "LB", "HB": "RB",
+  // Midfield
+  'DM',   // Defensive Midfielder
+  'CDM',
+  'CM',
+  'CM1',
+  'CM2',
+  'AM',   // Attacking Midfielder
+  'CAM',
 
-  "DM": "CDM", "DMB": "CDM", "ADM": "CDM",
+  // Wide Midfield / Wing
+  'LM',
+  'RM',
+  'LW',
+  'RW',
 
-  "IM": "CM", "MI": "CM", "Sentral": "CM", "S": "CM",
+  // Strikers
+  'ST',
+  'CF',
 
-  "VK": "LW", "HK": "RW",
-
-  "CS": "ST", "SP": "ST",
-};
+  // Norwegian equivalents (mapped to English automatically)
+  'VB',  // LB
+  'HB',  // RB
+  'MS',  // CB
+  'MB',  // CB
+  'DMN', // DM
+  'IM',  // CM
+  'KA',  // CAM / AM
+  'VK',  // LW
+  'HK',  // RW
+  'SP',  // ST
+  'CS',  // ST
+  'PC',  // Set piece special role
+];

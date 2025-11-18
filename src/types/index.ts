@@ -65,16 +65,45 @@ export interface AppData {
 
 // Standard positions used across the app (12 official roles)
 export const STANDARD_POSITIONS = [
-  'GK',   // Goalkeeper
-  'LB',   // Left Back
-  'CB1',  // Center Back 1
-  'CB2',  // Center Back 2
-  'RB',   // Right Back
-  'LM',   // Left Midfielder
-  'CM1',  // Central Midfielder 1
-  'CM2',  // Central Midfielder 2
-  'RM',   // Right Midfielder
-  'LW',   // Left Winger
-  'ST',   // Striker
-  'RW',   // Right Winger
+  // Defensive Line
+  'GK',
+
+  'LB',
+  'CB',
+  'CB1',
+  'CB2',
+  'RB',
+
+  // Midfield
+  'DM',   // Defensive Midfielder
+  'CDM',
+  'CM',
+  'CM1',
+  'CM2',
+  'AM',   // Attacking Midfielder
+  'CAM',
+
+  // Wide Midfield / Wing
+  'LM',
+  'RM',
+  'LW',
+  'RW',
+
+  // Strikers
+  'ST',
+  'CF',
+
+  // Norwegian equivalents (mapped to English automatically)
+  'VB',  // LB
+  'HB',  // RB
+  'MS',  // CB
+  'MB',  // CB
+  'DMN', // DM
+  'IM',  // CM
+  'KA',  // CAM / AM
+  'VK',  // LW
+  'HK',  // RW
+  'SP',  // ST
+  'CS',  // ST
+  'PC',  // Set piece special role
 ];

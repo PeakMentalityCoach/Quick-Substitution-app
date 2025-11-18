@@ -1,6 +1,6 @@
 export interface PositionRating {
   position: string;
-  rating: number; // 1–10
+  rating: number;
 }
 
 export interface Player {
@@ -9,7 +9,7 @@ export interface Player {
   jerseyNumber: number;
   positions: string[];
   ratings: PositionRating[];
-  notes?: string; // Player-specific notes
+  notes?: string;
 }
 
 export interface PlayerAssignment {
@@ -30,15 +30,21 @@ export interface GameState {
 export interface SetPieceLayout {
   id: string;
   name: string;
-  type: 'offensive-corner' | 'defensive-corner' | 'free-kick-central' | 'free-kick-wide' | 'throw-in-attacking' | 'throw-in-defending';
+  type:
+    | "offensive-corner"
+    | "defensive-corner"
+    | "free-kick-central"
+    | "free-kick-wide"
+    | "throw-in-attacking"
+    | "throw-in-defending";
   positions: SetPiecePosition[];
 }
 
 export interface SetPiecePosition {
   id: string;
-  label: string; // CB1, CB2, RM, LM, ST, KA, PC, etc.
-  x: number; // 0-100 (percentage of pitch width)
-  y: number; // 0-100 (percentage of pitch height)
+  label: string;
+  x: number;
+  y: number;
 }
 
 export interface SubstitutionPreview {
@@ -65,83 +71,71 @@ export interface AppData {
 
 export interface Note {
   id: string;
-  playerId?: string; // Optional: if note is player-specific
+  playerId?: string;
   content: string;
   createdAt: number;
   updatedAt: number;
 }
 
-// English & Norwegian shorthand support
+/* -------------------------------------------------------
+   OFFICIAL STANDARD POSITIONS (ENGLISH ONLY INTERNALLY)
+-------------------------------------------------------- */
+
 export const STANDARD_POSITIONS = [
-  // Goalkeeper
-  "GK", "MB",
+  "GK",
 
-  // Center backs
-  "CB", "CB1", "CB2", "MS", "VMS", "HMS",
+  "LB",
+  "CB",
+  "CB1",
+  "CB2",
+  "RB",
 
-  // Fullbacks / wingbacks
-  "LB", "RB", "VB", "HB",
+  "DM",
+  "CDM",
+  "CM",
+  "CM1",
+  "CM2",
+  "AM",
+  "CAM",
 
-  // Defensive midfield
-  "CDM", "DMF", "DMC",
-  "DM", "DMB",
-  "ADMF", "ADM", // Norwegian "anker"
+  "LM",
+  "RM",
+  "LW",
+  "RW",
 
-  // Central midfield
-  "CM", "CMF", "MC",
-  "IM", "MI", "Sentral", "S",
-
-  // Attacking midfield
-  "CAM", "AM", "OffMF", "OMF",
-
-  // Wingers
-  "LW", "RW", "VK", "HK",
-
-  // Strikers
-  "ST", "CF", "CS", "SP"
+  "ST",
+  "CF",
 ];
 
-// Mapping Norwegian → English internally
-export const STANDARD_POSITIONS = [
-  // Defensive Line
-  'GK',
+/* -------------------------------------------------------
+   NORWEGIAN → ENGLISH NORMALIZATION MAP
+-------------------------------------------------------- */
 
-  'LB',
-  'CB',
-  'CB1',
-  'CB2',
-  'RB',
+export const POSITION_MAP: Record<string, string> = {
+  // Goalkeeper
+  "MB": "CB",
+
+  // Centre-backs
+  "MS": "CB",
+
+  // Fullbacks
+  "VB": "LB",
+  "HB": "RB",
 
   // Midfield
-  'DM',   // Defensive Midfielder
-  'CDM',
-  'CM',
-  'CM1',
-  'CM2',
-  'AM',   // Attacking Midfielder
-  'CAM',
+  "DMN": "DM",
+  "IM": "CM",
+  "MI": "CM",
+  "Sentral": "CM",
+  "S": "CM",
+  "KA": "CAM",
 
-  // Wide Midfield / Wing
-  'LM',
-  'RM',
-  'LW',
-  'RW',
+  // Wingers
+  "VK": "LW",
+  "HK": "RW",
 
   // Strikers
-  'ST',
-  'CF',
-
-  // Norwegian equivalents (mapped to English automatically)
-  'VB',  // LB
-  'HB',  // RB
-  'MS',  // CB
-  'MB',  // CB
-  'DMN', // DM
-  'IM',  // CM
-  'KA',  // CAM / AM
-  'VK',  // LW
-  'HK',  // RW
-  'SP',  // ST
-  'CS',  // ST
-  'PC',  // Set piece special role
-];
+  "SP": "ST",
+  "CS": "ST",
+  "PC": "ST",
+};

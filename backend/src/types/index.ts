@@ -1,3 +1,7 @@
+/* -------------------------------------------------------
+   DATA MODELS
+-------------------------------------------------------- */
+
 export interface PositionRating {
   position: string;
   rating: number;
@@ -78,33 +82,34 @@ export interface Note {
 }
 
 /* -------------------------------------------------------
-   OFFICIAL STANDARD POSITIONS (ENGLISH ONLY INTERNALLY)
+   OFFICIAL FORMATION POSITIONS (THE 11–12 USED EVERYWHERE)
 -------------------------------------------------------- */
 
+/**
+ * IMPORTANT:
+ * These positions must match the formation and optimizer.
+ * This exact order is required by:
+ *  - LineupBuilder
+ *  - Optimizer
+ *  - Set-piece auto-assignment
+ *  - Game start validation
+ */
 export const STANDARD_POSITIONS = [
   "GK",
 
   "LB",
-  "CB",
   "CB1",
   "CB2",
   "RB",
 
-  "DM",
-  "CDM",
-  "CM",
+  "LM",
   "CM1",
   "CM2",
-  "AM",
-  "CAM",
-
-  "LM",
   "RM",
-  "LW",
-  "RW",
 
+  "LW",
   "ST",
-  "CF",
+  "RW",
 ];
 
 /* -------------------------------------------------------
@@ -114,21 +119,22 @@ export const STANDARD_POSITIONS = [
 export const POSITION_MAP: Record<string, string> = {
   // Goalkeeper
   "MB": "CB",
-
-  // Centre-backs
   "MS": "CB",
 
   // Fullbacks
   "VB": "LB",
   "HB": "RB",
 
-  // Midfield
-  "DMN": "DM",
+  // Midfield (Norwegian)
+  "DMN": "CM1",
+  "DM": "CM1",
   "IM": "CM",
   "MI": "CM",
   "Sentral": "CM",
   "S": "CM",
-  "KA": "CAM",
+
+  // Attacking Midfielder
+  "KA": "CM2",
 
   // Wingers
   "VK": "LW",
